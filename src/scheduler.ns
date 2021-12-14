@@ -3,73 +3,92 @@ import {getServerList} from "utilities.ns"
 /** @param {NS} ns **/
 export async function main(ns) {
 	let targets = [ns.args[0]]
-	ns.tprint(targets)
     let servers = getServerList(ns)
-	servers = servers.filter(f => f !== "iron-gym") // TODO temporary
+	servers = servers.filter(f => (f !== "iron-gym") && (f !== ".") && (f !== "home")) // TODO temporary
 	schedule(ns, servers, targets)
 }
 
 async function schedule(ns, servers, targets) {
-	ns.tprint("here")
 	let nThreads = getTotalThreads(ns, servers, 1.75)
-	ns.tprint(nThreads)
 	nThreads = Math.floor(nThreads / targets.length)
-	ns.tprint(nThreads)
 	for (const target of targets) {
-		ns.tprint(target)
 		await scheduleAttack(ns, servers, nThreads, target)
 	}
 }
 
 async function scheduleAttack(ns, servers, nThreads, target) {
 	let threadsCount = getThreadsRatio(ns, target)
-	ns.tprint(threadsCount)
 	let times = [ns.getHackTime(target), ns.getGrowTime(target), ns.getWeakenTime(target)]
-	ns.tprint(times)
-	let roundTime = Math.ceil(Math.max(times))
-	ns.tprint(roundTime)
-	let timeIncrement = getTimeIncrement(ns, roundTime, times, threadsCount, nThreads)
-	ns.tprint(timeIncrement)
+	let roundTime = Math.ceil(Math.max(...times))
+	let timeIncrement = getTimeIncrement(roundTime, times, threadsCount, nThreads)
 	
-	let serverMapping = getServerMapping(servers, times, timeIncrement, threadsCount)
+	let serverMapping = getServerMapping(ns, servers, times, timeIncrement, threadsCount)
 	ns.tprint(serverMapping)
 	
-	await deploy(serverMapping, target)
+	await deploy(ns, serverMapping, target, threadsCount, timeIncrement)
 }
 
-async function deploy(ns, serverMapping, target) {
-	scripts = ["hack.ns", "grow.ns", "weaken.ns"]
+async function deploy(ns, serverMapping, target, threadsCount, timeIncrement) {
+	let scripts = ["hack.ns", "grow.ns", "weaken.ns"]
+	let lastServer = [[0,0], [0,0], [0,0]] // lastServer index; used slots
 	while (true) {
 		for (let i = 0; i < 3; i++) {
-			for (const [server, nThreads] of serverMapping[i]) {
-				ns.exec(scripts[i], server, nThreads, target)
-			}
+			lastServer[i] = start(ns, scripts[i], target, threadsCount[i], serverMapping[i], lastServer[i])
 		}
-		await ns.sleep(Maths.floor(timeIncrement * 1000))
+		ns.tprint("before sleep")
+		let sleepTime = Math.floor(timeIncrement)
+		ns.tprint("sleep time: " + sleepTime);
+		await ns.sleep(131);
+		ns.tprint("after sleep");
 	}
+}
+
+function start(ns, script, target, nThreads, serverMap, lastServer) {
+	let requiredThreads = nThreads
+	let serverInd = lastServer[0]
+	let usedThreads = lastServer[1]
+	while (requiredThreads > 0) {
+		let freeThreads = serverMap[serverInd][1] - usedThreads
+		let runThreads = Math.min(requiredThreads, freeThreads)
+		let server = serverMap[serverInd][0]
+		ns.exec(script, server, runThreads, target)
+		requiredThreads -= runThreads
+		if (freeThreads == runThreads) {
+			serverInd++
+			if (serverInd == serverMap.length) {
+				serverInd = 0
+			}
+			usedThreads = 0
+		} else {
+			usedThreads += runThreads
+		}
+	}
+	return [serverInd, usedThreads]
 }
 
 function getThreadsRatio(ns, server) {
+	const maxHackThreads = 10
 	let hackPercent = ns.hackAnalyze(server)
-	let growthNeeded = (1 / (1 - hackPercent)) * ns.hackAnalyzeChance(server) * 1.01
-	let nGrowthThreads = Math.ceil(ns.growthAnalyze(server, growthNeeded))
-	
-	let nHackThreads = 1
-	if (nGrowthThreads < 0.5) {
-		nHackThreads = Maths.floor(1 / nGrowthThreads)
-	}
+	let growthNeeded = (1 / (1 - hackPercent * ns.hackAnalyzeChance(server))) * 1.01
+	let nGrowthThreads = ns.growthAnalyze(server, growthNeeded)
 
-	let securityIncrease = ns.hackAnalyzeSecurity(nHackThreads) + ns.growthAnalyzeSecurity(nGrowthThreads)
-	let nWeakenThreads = Math.ceil(securityIncrease / ns.weakenAnalyze(1))
+	let securityIncrease = ns.hackAnalyzeSecurity(1) + nGrowthThreads * ns.growthAnalyzeSecurity(1)
+	let nWeakenThreads = securityIncrease / ns.weakenAnalyze(1)
+
+	let mult = Math.min(maxHackThreads, Math.max(1/nGrowthThreads, 1/nWeakenThreads))
+
+	let nHackThreads = mult
+	nGrowthThreads = Math.ceil(nGrowthThreads * mult)
+	nWeakenThreads = Math.ceil(nWeakenThreads * mult)
 
 	return [nHackThreads, nGrowthThreads, nWeakenThreads]
 }
 
-function getServerMapping(servers, times, timeIncrement, threadsCount) {
+function getServerMapping(ns, servers, times, timeIncrement, threadsCount) {
 	const ramPerThread = 1.75
 	let serverInd = 0
 	let serverIndUsed = 0
-	let serverMapping = [{},{},{}] // empty dicts
+	let serverMapping = [[],[],[]] // empty tuple lists
 	let divisions = getDivisions(times, timeIncrement)
 	for (let i = 0; i < 3; i++) {
 		let n = divisions[i] * threadsCount[i]
@@ -81,8 +100,9 @@ function getServerMapping(servers, times, timeIncrement, threadsCount) {
 				serverInd += 1
 				serverIndUsed = 0
 			} else {
-				serverMapping[i][server] = nAdd
+				serverMapping[i].push([server, nAdd])
 				serverIndUsed += nAdd
+				nFound += nAdd
 			}
 		}	
 	}
@@ -93,21 +113,24 @@ function getServerThreads(ns, server, ramPerThread) {
 	return Math.floor(ns.getServerMaxRam(server) / ramPerThread)
 }
 
-function getTimeIncrement(ns, roundTime, times, threadsCount, maxNThreads) {
+function getTimeIncrement(roundTime, times, threadsCount, maxNThreads) {
 	const searchSteps = 0.01
-	let threadsCountSum = threadsCount[0] + threadsCount[1] + threadsCount[2]
-	let timeIncrement = (roundTime / maxNThreads) * (threadsCount[0] / times[0] + threadsCount[1] / times[1] + threadsCount[2] / times[2])
-	let numThreads = getRequiredNumThreads(times, threadsRatio, timeIncrement)
+	let threadsCountSum = threadsCount[0] + threadsCount[1] + threadsCount[2] 
+	
+	let lower = 0.01
+	let upper = 10000
+
 	// adjust timeIncrement // TODO binary search without initial guess
-	while (numThreads > maxNThreads || numThreads < maxNThreads - threadsCountSum) {
+	for (let i = 0; i < 20; i++) {
+		let middle = (lower + upper) / 2 
+		let numThreads = getRequiredNumThreads(times, threadsCount, middle)
 		if (numThreads > maxNThreads) { 
-			timeIncrement += searchSteps
+			lower = middle
 		} else {
-			timeIncrement -= searchSteps
+			upper = middle
 		}
-		let numThreads = getRequiredNumThreads(times, threadsRatio, timeIncrement)
 	}
-	return timeIncrement
+	return upper
 }
 
 function getRequiredNumThreads(times, threadsCount, timeIncrement) {
@@ -128,11 +151,9 @@ function getDivisions(times, timeIncrement) {
 }
 
 function getTotalThreads(ns, servers, ramPerThread) {
-	num = 0
-	ns.tprint("h2")
-	for (server of servers) {
-		ns.tprint(server)
-		//num += getServerThreads(ns, server, ramPerThread)
+	let num = 0
+	for (const server of servers) {
+		num += getServerThreads(ns, server, ramPerThread)
 	}
 	return num
 }
