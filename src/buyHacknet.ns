@@ -9,7 +9,7 @@ export async function main(ns) {
 	}
 
 	let h = ns.hacknet
-	let upgradeItems = [h.getLevelUpgradeCost, h.getCacheUpgradeCost, h.getCoreUpgradeCost]
+	let upgradeItems = [h.getLevelUpgradeCost, h.getRamUpgradeCost, h.getCoreUpgradeCost]
 	let doUpgradeItems = [h.upgradeLevel, h.upgradeRam, h.upgradeCore]
 	while (true) {
 		let availableMoney = ns.getServerMoneyAvailable("home")
