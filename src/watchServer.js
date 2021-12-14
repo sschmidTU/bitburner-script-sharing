@@ -20,7 +20,7 @@ export async function main(ns) {
             newMoneyPercent *= 100;
             newMoneyPercent = newMoneyPercent.toFixed(1);
 
-            ns.print(`${printTimeNow()} new money: ${newMoney.toLocaleString()} (${newMoneyPercent}%)`);
+            ns.print(`${printTimeNow()} new money: ${Number(newMoney.toFixed(0)).toLocaleString()} (${newMoneyPercent}%)`);
 
             money = newMoney;
         }
