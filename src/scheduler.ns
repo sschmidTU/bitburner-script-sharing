@@ -5,7 +5,7 @@ export async function main(ns) {
 	let targets = [ns.args[0]]
     let servers = getServerList(ns)
 	servers = servers.filter(f => (f !== "iron-gym") && (f !== ".") && (f !== "home")) // TODO temporary
-	schedule(ns, servers, targets)
+	await schedule(ns, servers, targets)
 }
 
 async function schedule(ns, servers, targets) {
@@ -23,35 +23,36 @@ async function scheduleAttack(ns, servers, nThreads, target) {
 	let timeIncrement = getTimeIncrement(roundTime, times, threadsCount, nThreads)
 	
 	let serverMapping = getServerMapping(ns, servers, times, timeIncrement, threadsCount)
-	ns.tprint(serverMapping)
-	
 	await deploy(ns, serverMapping, target, threadsCount, timeIncrement)
 }
 
 async function deploy(ns, serverMapping, target, threadsCount, timeIncrement) {
 	let scripts = ["hack.ns", "grow.ns", "weaken.ns"]
 	let lastServer = [[0,0], [0,0], [0,0]] // lastServer index; used slots
+	let sleepTime = Math.floor(timeIncrement / 3)
+	let id = 0
 	while (true) {
 		for (let i = 0; i < 3; i++) {
-			lastServer[i] = start(ns, scripts[i], target, threadsCount[i], serverMapping[i], lastServer[i])
+			lastServer[i] = start(ns, scripts[i], target, threadsCount[i], serverMapping[i], lastServer[i], id++)
+			if (id > 10000) {
+				id = 0
+			}
+
+			await ns.sleep(sleepTime);
 		}
-		ns.tprint("before sleep")
-		let sleepTime = Math.floor(timeIncrement)
-		ns.tprint("sleep time: " + sleepTime);
-		await ns.sleep(131);
-		ns.tprint("after sleep");
 	}
 }
 
-function start(ns, script, target, nThreads, serverMap, lastServer) {
+function start(ns, script, target, nThreads, serverMap, lastServer, id) {
 	let requiredThreads = nThreads
 	let serverInd = lastServer[0]
 	let usedThreads = lastServer[1]
+	let randId = id
 	while (requiredThreads > 0) {
 		let freeThreads = serverMap[serverInd][1] - usedThreads
 		let runThreads = Math.min(requiredThreads, freeThreads)
 		let server = serverMap[serverInd][0]
-		ns.exec(script, server, runThreads, target)
+		ns.exec(script, server, runThreads, target, randId++)
 		requiredThreads -= runThreads
 		if (freeThreads == runThreads) {
 			serverInd++
@@ -67,7 +68,7 @@ function start(ns, script, target, nThreads, serverMap, lastServer) {
 }
 
 function getThreadsRatio(ns, server) {
-	const maxHackThreads = 10
+	const maxHackThreads = 100
 	let hackPercent = ns.hackAnalyze(server)
 	let growthNeeded = (1 / (1 - hackPercent * ns.hackAnalyzeChance(server))) * 1.01
 	let nGrowthThreads = ns.growthAnalyze(server, growthNeeded)
@@ -77,7 +78,7 @@ function getThreadsRatio(ns, server) {
 
 	let mult = Math.min(maxHackThreads, Math.max(1/nGrowthThreads, 1/nWeakenThreads))
 
-	let nHackThreads = mult
+	let nHackThreads = Math.max(1, Math.floor(mult))
 	nGrowthThreads = Math.ceil(nGrowthThreads * mult)
 	nWeakenThreads = Math.ceil(nWeakenThreads * mult)
 
