@@ -1,0 +1,30 @@
+/** @param {NS} ns **/
+export async function main(ns) {
+	let h = ns.hacknet
+	let upgradeItems = [h.getLevelUpgradeCost, h.getCacheUpgradeCost, h.getCoreUpgradeCost]
+	let doUpgradeItems = [h.upgradeLevel, h.upgradeRam, h.upgradeCore]
+	while (true) {
+		// find cheapest option
+		let cheapestNode = -1
+		let cheapestUpgradeType = 0
+		let cheapestCost = Infinity
+		for (let node = 0; node < h.numNodes(); node++) {
+			for (let i = 0; i < upgradeItems.length; i++) {
+				let cost = upgradeItems[i](node, 1)
+				if (cost < cheapestCost) {
+					cheapestNode = node
+					cheapestUpgradeType = i
+					cheapestCost = cost
+				}
+			}
+		}
+		// do upgrade
+		if (h.numNodes() < h.maxNumNodes() && h.getPurchaseNodeCost() < cheapestCost) {
+			h.purchaseNode()
+		} else {
+			doUpgradeItems[cheapestUpgradeType](cheapestNode, 1)
+		}
+		await ns.sleep(1000)
+	}
+}
+// TODO how to get player money?
