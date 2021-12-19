@@ -1,6 +1,6 @@
 /** @param {NS} ns **/
 export async function main(ns) {
-    if (ns.args.length === 0) {
+    if (ns.args.length < 2) {
         ns.tprint("usage: runin seconds script [args]");
         return;
     }
