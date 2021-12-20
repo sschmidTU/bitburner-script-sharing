@@ -1,0 +1,261 @@
+import { sum, getServerList } from "utilities.ns"
+
+/** @param {NS} ns **/
+export async function main(ns) {
+	ns.disableLog('ALL');
+	const optionsFile = "options.txt"
+	const options = JSON.parse(ns.read(optionsFile))
+	const loopAgainTimeMax = options.loopAgainTimeMax
+	while (true) {
+		const targets = getMoneyTarget(ns, options)
+		ns.print("Targets: " + targets)
+		let servers = getServerList(ns, [])
+		servers = servers.filter(f => (ns.hasRootAccess(f) && ns.getServerRequiredHackingLevel(f) < ns.getHackingLevel()))
+		await prepareServers(ns, options, servers)
+		await schedule(ns, options, servers, targets)
+		let loopAgainTime = options.roundsPerLoop * Math.max(...getTimes(ns, options, targets[0]))
+		loopAgainTime = Math.min(loopAgainTime, loopAgainTimeMax)
+		ns.print("Sleeping for " + (loopAgainTime / 1000).toFixed(0) + "s")
+		await ns.sleep(loopAgainTime)
+	}
+}
+
+async function prepareServers(ns, options, servers) {
+	for (const server of servers) {
+		await ns.scp(options.scripts, "home", server)
+		await ns.scp("start.ns", "home", server)
+		if (server !== "home") {
+			ns.killall(server)
+		}
+
+	}
+}
+
+function getMoneyTarget(ns, options) {
+	const serversJson = JSON.parse(ns.read(options.serverFile))
+	const servers = Object.keys(serversJson)
+	const compareFunction = (s1, s2) => serversJson[s2] - serversJson[s1]
+	servers.sort(compareFunction)
+	return servers.filter(s => serversJson[s] > 0)
+}
+
+async function schedule(ns, options, servers, targets) {
+	let lastServer = [0, 0] // serverInd; threads running
+	let nThreads = getTotalThreads(ns, options, servers)
+	for (const target of targets) {
+		if (nThreads == 0) {
+			ns.print("Finished loop!")
+			break
+		}
+		if (ns.getServerSecurityLevel(target) > ns.getServerMinSecurityLevel(target) * options.securityThreshold) {
+			ns.print("Weakaning target " + target)
+			ns.run("fullWeaken.ns", 1, target)
+			continue
+		}
+		const scheduleReturn = await scheduleAttack(ns, options, servers, nThreads, target, lastServer)
+		lastServer = scheduleReturn[0]
+		const usedThreads = scheduleReturn[1]
+		nThreads -= usedThreads
+	}
+}
+
+function getTimes(ns, options, target) {
+	const weakMult = options.weakMult
+	return [ns.getHackTime(target), weakMult * ns.getWeakenTime(target), ns.getGrowTime(target), weakMult * ns.getWeakenTime(target)]
+}
+
+async function scheduleAttack(ns, options, servers, nThreads, target, lastRealServer) {
+	ns.print("Scheduling attack: " + target)
+	let threadsCount = getThreadsRatio(ns, options, target)
+	if (sum(threadsCount) > nThreads) {
+		const factor = options.minLoops * sum(threadsCount) / nThreads
+		for (let i = 0; i < threadsCount.length; i++) {
+			threadsCount[i] = Math.ceil(threadsCount[i] / factor)
+		}
+	}
+
+	let times = getTimes(ns, options, target)
+	let timeIncrement = getTimeIncrement(ns, options, target, threadsCount, nThreads)
+	if (timeIncrement > options.maxTimeIncrement) {
+		ns.print("to big time increment!")
+		return [lastRealServer, nThreads]
+	}
+	//ns.tprint("lastRealServer: " + lastRealServer + " of " + servers.length)
+	//ns.tprint("Last server threads of " + servers[lastRealServer[0]] + ": " + getServerThreads(ns, options, servers[lastRealServer[0]]))
+	//ns.tprint("TC: " + threadsCount)
+	//ns.tprint("Times: " + (times[0]/1000).toFixed(0) + ", " + (times[1]/1000).toFixed(0) + ", " + (times[2]/1000).toFixed(0))
+	//ns.tprint("nThreads: " + nThreads)
+	//ns.tprint("Remaining T: " + threadsRemaining(ns, options, servers, lastRealServer))
+	const serverMappingReturn = getServerMapping(ns, options, servers, times, timeIncrement, threadsCount, lastRealServer)
+	const serverMapping = serverMappingReturn[0]
+	lastRealServer = serverMappingReturn[1]
+	const usedThreads = serverMappingReturn[2]
+	let lastServerLoop = [[0, 0], [0, 0], [0, 0], [0, 0]] // lastServer index; used slots
+
+	//ns.print("Threads Count: " + threadsCount)
+	//ns.print("Time increment: " + timeIncrement)
+	//ns.print("Times: " + times)
+	//ns.print("Total threads: " + nThreads)
+	lastServerLoop = await deploy(ns, options, serverMapping, target, threadsCount, timeIncrement, lastServerLoop)
+
+	return [lastRealServer, usedThreads]
+}
+
+function threadsRemaining(ns, options, servers, lastServer) {
+	let num = getServerThreads(ns, options, servers[lastServer[0]]) - lastServer[1]
+	for (let i = lastServer[0] + 1; i < servers.length; i++) {
+		num += getServerThreads(ns, options, servers[i])
+	}
+	return num
+}
+
+async function deploy(ns, options, serverMapping, target, threadsCount, timeIncrement, lastServer) {
+	const delayTime = 1 // for not hanging
+	let sleepTime = Math.floor(timeIncrement / threadsCount.length)
+	let times = getTimes(ns, options, target)
+	const endTime = Math.max(...times)
+	let currentTime = 0
+	const loops = endTime / sleepTime / threadsCount.length
+	for (let _ = 0; _ < loops; _++) {
+		for (let i = 0; i < threadsCount.length; i++) {
+			currentTime += sleepTime
+			if (currentTime < endTime - times[i]) {
+				continue
+			}
+			lastServer[i] = start(ns, options.scripts[i], target, threadsCount[i], serverMapping[i], lastServer[i], currentTime)
+		}
+		currentTime -= delayTime
+		await ns.sleep(delayTime)
+	}
+	return lastServer
+}
+
+function start(ns, script, target, nThreads, serverMap, lastServer, time) {
+	let requiredThreads = nThreads
+	let serverInd = lastServer[0]
+	let usedThreads = lastServer[1]
+	while (requiredThreads > 0 && serverInd < serverMap.length) {
+		const freeThreads = serverMap[serverInd][1] - usedThreads
+		const runThreads = Math.min(requiredThreads, freeThreads)
+		const server = serverMap[serverInd][0]
+		const success = ns.exec("start.ns", server, 1, script, time, runThreads, target)
+		if (success == 0) {
+			ns.tprint("Exec failed: " + server + " " + script)
+		}
+		requiredThreads -= runThreads
+		if (freeThreads == runThreads) {
+			serverInd++
+			usedThreads = 0
+		} else {
+			usedThreads += runThreads
+		}
+	}
+	return [serverInd, usedThreads]
+}
+
+export function getThreadsRatio(ns, options, server) {
+	let nHack = Math.floor(ns.hackAnalyzeThreads(server, options.hackPercent * ns.getServerMoneyAvailable(server)))
+	nHack = Math.min(options.maxHackThreads, nHack)
+
+	const securityIncreaseHack = (ns.hackAnalyzeSecurity(nHack))
+	const searchNWeakenHack = n => (ns.weakenAnalyze(n) < securityIncreaseHack * options.additionalWeakeningPerCycle)
+	let nWeakenHack = Math.ceil(binarySearch(searchNWeakenHack, 1, options.maxThreadRatio * nHack)[1])
+
+	let growthNeeded = (1 / (1 - options.hackPercent)) * options.additionalGrowthPerCycle
+	let nGrowth = Math.ceil(ns.growthAnalyze(server, growthNeeded))
+
+	const securityIncreaseGrowth = (ns.growthAnalyzeSecurity(nGrowth))
+	const searchNWeakenGrowth = n => (ns.weakenAnalyze(n) < securityIncreaseGrowth * options.additionalWeakeningPerCycle)
+	let nWeakenGrowth = Math.ceil(binarySearch(searchNWeakenGrowth, 1, options.maxThreadRatio * nHack)[1])
+
+	return [nHack, nWeakenHack, nGrowth, nWeakenGrowth]
+}
+
+function getServerMapping(ns, options, servers, times, timeIncrement, threadsCount, lastServer) {
+	const divisions = getDivisions(times, timeIncrement)
+	let serverInd = lastServer[0]
+	let serverIndUsed = lastServer[1]
+	let usedThreads = 0
+	let serverMapping = [] // empty tuple lists
+	for (let i = 0; i < threadsCount.length; i++) {
+		serverMapping.push([])
+		const n = divisions[i] * threadsCount[i]
+		let nFound = 0
+		while (nFound < n) {
+			if (serverInd >= servers.length) {
+				ns.tprint("getServerMapping overflow!!")
+				ns.tprint("usedThreads: " + usedThreads)
+				ns.tprint("Divisions: " + divisions)
+				ns.tprint("TimeIncrement: " + timeIncrement)
+			}
+			const server = servers[serverInd]
+			const nAdd = Math.min(getServerThreads(ns, options, server) - serverIndUsed, n - nFound)
+			if (nAdd <= 0) {
+				serverInd += 1
+				serverIndUsed = 0
+			} else {
+				serverMapping[i].push([server, nAdd])
+				serverIndUsed += nAdd
+				nFound += nAdd
+				usedThreads += nAdd
+			}
+		}
+	}
+	return [serverMapping, [serverInd, serverIndUsed], usedThreads]
+}
+
+function getServerThreads(ns, options, server) {
+	let threads = Math.floor((ns.getServerMaxRam(server) - options.ramOffset) / options.ramPerThread)
+	if (server === "home") {
+		threads = Math.floor((ns.getServerMaxRam(server) - ns.getServerUsedRam(server)) / 2)
+	}
+	return threads
+}
+
+export function getTimeIncrement(ns, options, target, threadsCount, maxNThreads) {
+	let times = getTimes(ns, options, target)
+	const searchFunction = value => (getRequiredNumThreads(times, threadsCount, value) > maxNThreads)
+
+	const timeIncrement = binarySearch(searchFunction, options.fastestAttack * threadsCount.length, options.slowestAttack)
+	return timeIncrement[1]
+}
+
+// search for the largest value that where f is not true
+function binarySearch(f, low, high) {
+	let lower = low
+	let upper = high
+	for (let i = 0; i < 30; i++) {
+		let middle = (lower + upper) / 2
+		if (f(middle)) {
+			lower = middle
+		} else {
+			upper = middle
+		}
+	}
+	return [lower, upper]
+}
+
+function getRequiredNumThreads(times, threadsCount, timeIncrement) {
+	let num = 0
+	const divisions = getDivisions(times, timeIncrement)
+	for (let i = 0; i < threadsCount.length; i++) {
+		num += divisions[i] * threadsCount[i]
+	}
+	return num
+}
+
+function getDivisions(times, timeIncrement) {
+	let divisions = []
+	for (let i = 0; i < times.length; i++) {
+		divisions.push(Math.ceil(times[i] / timeIncrement))
+	}
+	return divisions
+}
+
+export function getTotalThreads(ns, options, servers) {
+	let num = 0
+	for (const server of servers) {
+		num += getServerThreads(ns, options, server)
+	}
+	return num
+}

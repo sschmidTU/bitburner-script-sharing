@@ -1,0 +1,63 @@
+export function getServerList(ns, excludeServers=["home"]) {
+    var l = ns.scan('home')
+	var final = []
+	let cnt = 0
+	while (!l.length == 0 && cnt++ < 1000) {
+		var item = l.pop()
+		if (ns.hasRootAccess(item)) {
+			final.push(item)
+		} else {
+			if (isRootable(ns, item)) {
+				ns.print("Rooting: " + item)
+				ns.run("r.ns", 1, item)
+			}
+		}
+		const s2 = ns.scan(item)
+		for (const s of s2) {
+			if (!excludeServers.includes(s) && !final.includes(s) && !l.includes(s) && ns.hasRootAccess(item)) {
+				l.push(s)
+			}
+		}
+	}
+	return final.filter(s => !excludeServers.includes(s))
+}
+
+export function sum(array) {
+	let s = 0
+	for (const item of array) {
+		s += item
+	}
+	return s
+}
+
+export async function root(ns, server) {
+	var num = ns.getServerNumPortsRequired(server)
+    var progs = [ns.brutessh, ns.ftpcrack, ns.relaysmtp, ns.httpworm, ns.sqlinject]
+	for (var i = 0; i < num; i++) {
+		await progs[i](server)
+	}
+	await ns.nuke(server)
+}
+
+export function getNumCracks(ns) {
+	if (ns.ls("home", "SQLInject.exe").length > 0) {
+		return 5
+	} else if (ns.ls("home", "HTTPWorm.exe").length > 0) {
+		return 4
+	} else if (ns.ls("home", "relaySMTP.exe").length > 0) {
+		return 3
+	} else if (ns.ls("home", "FTPCrack.exe").length > 0) {
+		return 2
+	} else if (ns.ls("home", "BruteSSH.exe").length > 0) {
+		return 1
+	}
+	return 0
+}
+
+export function isRootable(ns, server) {
+	return getNumCracks(ns) >= ns.getServerNumPortsRequired(server)
+}
+
+export function exists(ns, file) {
+    return ns.ls("home", file).length > 0
+}

@@ -1,0 +1,52 @@
+import { getTimeIncrement, getThreadsRatio, getTotalThreads } from "scheduler.ns"
+import { getServerList } from "utilities.ns"
+/** @param {NS} ns **/
+export async function main(ns) {
+	ns.disableLog("ALL")
+	const optionsFile = "options.txt"
+	while (true) {
+		const options = JSON.parse(ns.read(optionsFile))
+		await serverLoop(ns, options)
+		await ns.sleep(options.estimateHackWorthSleep)
+	}
+}
+
+async function serverLoop(ns, options) {
+	const filename = "servers_money_factor.txt"
+	if (ns.ls("home", filename).length == 0) {
+		await ns.write(filename, "{}", "w")
+	}
+
+	const servers = getServerList(ns)
+	const nThreads = getTotalThreads(ns, options, servers)
+
+	let nWeaken = 0
+	for (const server of servers) {
+		if (ns.getServerMaxMoney(server) > 0) {
+			if (ns.getServerSecurityLevel(server) == ns.getServerMinSecurityLevel(server)) {
+				const value = getServerValue(ns, options, server, nThreads)
+				ns.print("getServerValue(" + server + "): " + value.toFixed(2))
+				let serversFile = JSON.parse(ns.read(filename))
+				serversFile[server] = value.toFixed(1)
+				await ns.write(filename, JSON.stringify(serversFile), "w")
+			} else {
+				if (nWeaken++ < options.maxWeakenTargets) {
+					ns.run("fullWeaken.ns", 1, server)
+				}
+			}
+		}
+		await ns.sleep(100)
+	}
+}
+
+function getServerValue(ns, options, server, nThreads) {
+	const hackChance = ns.hackAnalyzeChance(server)
+	const maxMoney = ns.getServerMaxMoney(server)
+	const threadsCount = getThreadsRatio(ns, options, server)
+	const hackThreadsCount = threadsCount[0]
+	const timeIncrement = getTimeIncrement(ns, options, server, threadsCount, nThreads)
+
+	const hackPercentPerIncrement = ns.hackAnalyze(server) * hackThreadsCount
+	const estimatedCashPerS = maxMoney * hackChance * hackPercentPerIncrement / timeIncrement
+	return estimatedCashPerS
+}

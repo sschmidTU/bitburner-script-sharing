@@ -1,0 +1,21 @@
+{
+	"scripts": ["hackLoop.ns", "weakenLoop.ns", "growLoop.ns", "weakenLoop.ns"],
+	"loopAgainTimeMax": 3600000,
+	"roundsPerLoop": 5,
+    "serverFile": "servers_money_factor.txt",
+    "weakMult": 1.2,
+    "securityThreshold": 1.1,
+    "minLoops": 2,
+    "maxTimeIncrement": 3000000,
+    "hackPercent": 0.1,
+	"maxHackThreads": 1000,
+	"additionalGrowthPerCycle": 1.1,
+	"additionalWeakeningPerCycle": 1.1,
+    "maxThreadRatio": 1000,
+    "fastestAttack": 100,
+    "slowestAttack": 3600000,
+    "ramPerThread": 1.75,
+    "ramOffset": 2.6,
+    "maxWeakenTargets": 5,
+    "estimateHackWorthSleep": 100000
+}

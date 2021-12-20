@@ -1,0 +1,21 @@
+/** @param {NS} ns **/
+export async function main(ns) {
+    await fullWeaken(ns, ns.args[0])
+}
+
+export async function fullWeaken(ns, server) {
+	const weakenAmount = 0.05
+	const host = "home"
+	const script = "weaken.ns"
+	while (ns.getServerSecurityLevel(server) > ns.getServerMinSecurityLevel(server) * 1.01) {
+		const security = ns.getServerSecurityLevel(server) - ns.getServerMinSecurityLevel(server)
+		const nThreadsRequired = security / weakenAmount
+		const nThreadsMax = Math.floor((ns.getServerMaxRam(host) - ns.getServerUsedRam(host)) / ns.getScriptRam(script) / 2)
+		const nThreads = Math.min(nThreadsMax, nThreadsRequired)
+		if (nThreads > 0) {
+			ns.run(script, nThreads, server)
+		}
+		const sleepTime = ns.getWeakenTime(server) + 10
+		await ns.sleep(sleepTime)
+	}
+}
