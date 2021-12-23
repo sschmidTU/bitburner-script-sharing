@@ -4,16 +4,6 @@ export async function main(ns) {
 		"Tian Di Hui", "Sector-12", "Tetrads",
 		"Speakers for the Dead", "Daedalus"];
 	//factions = factions.sort((fac1, fac2) => ns.getServerRequiredHackingLevel(fac1) - )
-	const augSkips = [
-		//"Neuroreceptor Management Implant", // focus unnecessary aug
-		"Synthetic Heart",
-		"Synfibril Muscle",
-		"NEMEAN Subdermal Weave",
-		"Nanofiber Weave",
-		"Speech Processor Implant",
-		"Nuoptimal Nootropic Injector Implant",
-		"Speech Enhancement",
-	]
 	const augsInfo = [
 		{
 			name: "Neuroreceptor Management Implant",
