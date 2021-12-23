@@ -1,0 +1,5 @@
+{
+	"1": ["Sector-12", "Aevum"],
+	"2": ["Chongqing", "New Tokyo", "Ishima"],
+	"3": ["Volhaven"]
+}
