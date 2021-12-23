@@ -1,0 +1,153 @@
+import { getCrackNames, exists, connect } from "utilities.ns"
+/** @param {NS} ns **/
+export async function main(ns) {
+	ns.tail()
+	ns.disableLog("ALL")
+	const optionsFile = "options.txt"
+	const TODO = [upgradeHome, augment, installAugmentations, installBackdoor, joinFaction, createProgram, workForFaction, workForCompany]
+	while (true) {
+		const options = JSON.parse(ns.read(optionsFile))
+		for (const task of TODO) {
+			ns.print(task.name)
+			const res = await task(ns, options)
+			if (res) {
+				break
+			}
+		}
+		await ns.sleep(options.sleepSingularity)
+	}
+}
+
+function upgradeHome(ns) {
+	if (ns.getServerMoneyAvailable("home") > ns.getUpgradeHomeRamCost()) {
+		ns.upgradeHomeRam()
+	}
+	if (ns.getServerMoneyAvailable("home") > ns.getUpgradeHomeCoresCost()) {
+		ns.upgradeHomeCores()
+	}
+	return false
+}
+
+function workForCompany(ns) {
+	ns.workForCompany()
+	ns.setFocus(!ns.args[0])
+	return true
+}
+
+function createProgram(ns, options) {
+	const cracks = getCrackNames()
+	const crackLevels = [50, 100, 250, 500, 750]
+	const crackPrice = [500e3, 1.5e6, 5e6, 30e6, 250e6]
+	const otherProgs = ["AutoLink.exe", "DeepscanV1.exe", "ServerProfiler.exe", "DeepscanV2.exe"]
+	const otherLevels = [25, 75, 75, 400]
+	const otherPrice = [1e6, 500e3, 500e3, 25e6]
+	const progs = cracks//.concat(otherProgs)
+	const levels = crackLevels//.concat(otherLevels)
+	const prices = crackPrice//.concat(otherPrice)
+	for (let i = 0; i < progs.length; i++) {
+		if (!exists(ns, progs[i])) {
+			if (prices[i] < options.buyProgramThreshold * ns.getPlayer().money) {
+				checkBuyTor(ns)
+				ns.purchaseProgram(progs[i])
+			}
+			if (ns.getHackingLevel() >= levels[i] && !ns.args[0]) {
+				ns.print("Creating program: " + progs[i])
+				ns.createProgram(progs[i])
+				return true
+			}
+		}
+	}
+	return false
+}
+
+function checkBuyTor(ns) {
+	if (!ns.getPlayer().tor) {
+		ns.purchaseTor()
+	}
+}
+
+function findFactions(ns) {
+
+}
+
+async function installBackdoor(ns) {
+	const servers = ["CSEC", "avmnite-02h", "I.I.I.I", "run4theh111z", "fulcrumassets"]
+	const factions = ["CyberSec", "NiteSec", "The Black Hand", "BitRunners", "Fulcrum Secret Technologies"]
+	for (let i = 0; i < factions.length; i++) {
+		if (!ns.getPlayer().factions.includes(factions[i]) && ns.getServerRequiredHackingLevel(servers[i]) <= ns.getHackingLevel() && ns.hasRootAccess(servers[i])) {
+			ns.print("Installing backdoor: " + servers[i])
+			connect(ns, servers[i])
+			await ns.installBackdoor(servers[i])
+			connect(ns, "home")
+		}
+	}
+	return false
+}
+
+function joinFaction(ns) {
+	const options = JSON.parse(ns.read("options.txt"))
+	const factionGroups = JSON.parse(ns.read("faction-groups.txt"))
+	const g = options.factionGroup
+	const excluded = factionGroups[(g + 1) % 3].concat(factionGroups[(g + 2) % 3])
+	for (const faction of ns.checkFactionInvitations()) {
+		if (!excluded.includes(faction)) {
+			ns.joinFaction(faction)
+		}
+	}
+	for (const faction of factionGroups[g]) {
+		const player = ns.getPlayer()
+		if (player.money > 50e9 && !ns.getPlayer().factions.includes(faction)) {
+			ns.travelToCity(faction)
+		}
+	}
+	return false
+}
+
+function augment(ns) {
+	const augmentations = getAllAugmentationsFromOwnFactions(ns).filter(a => isObtainable(ns, a[0], a[1]))
+	if (augmentations.length > 0) {
+		const [aug, f] = augmentations[0]
+		ns.purchaseAugmentation(f, aug)
+	}
+}
+
+function isObtainable(ns, augmentation, faction) {
+	return ns.getAugmentationPrice(augmentation) < ns.getPlayer().money && ns.getAugmentationRepReq(augmentation) < ns.getFactionRep(faction)
+}
+
+function getAllAugmentationsFromOwnFactions(ns) {
+	const ownedAugmentations = ns.getOwnedAugmentations(true)
+	let augmentations = []
+	for (const f of ns.getPlayer().factions) {
+		for (const aug of ns.getAugmentationsFromFaction(f)) {
+			if (aug == "NeuroFlux Governor" || !ownedAugmentations.includes(aug)) {
+				augmentations.push([aug, f])
+			}
+		}
+	}
+	return augmentations
+}
+
+function installAugmentations(ns, options) {
+	if (ns.getOwnedAugmentations(true).length - ns.getOwnedAugmentations(false).length > options.resetAfterAugmentations) {
+		let options = JSON.parse(ns.read("options.txt"))
+		options.factionGroup = (options.factionGroup % 3) + 1
+		ns.write("options.txt", JSON.stringify(options))
+		ns.installAugmentations("reset.ns")
+	}
+}
+
+function workForFaction(ns) {
+	const missingRep = aug => ns.getFactionRep(aug[1]) - ns.getAugmentationRepReq(aug[0])
+	const sortByRep = (a,b) => missingRep(a) - missingRep(b)
+	const filterNotEnoughRep = a => ns.getAugmentationRepReq(a[0]) > ns.getFactionRep(a[1])
+	const augmentations = getAllAugmentationsFromOwnFactions(ns).filter(filterNotEnoughRep).sort(sortByRep)
+	if (augmentations.length > 0) {
+		const cheapestRepAugmentation = augmentations[0]
+		const faction = cheapestRepAugmentation[1]
+		ns.workForFaction(faction, "Hacking Contracts")
+		ns.setFocus(!ns.args[0])
+		return true
+	}
+	return false
+}
