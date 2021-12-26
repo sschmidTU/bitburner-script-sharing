@@ -2,7 +2,7 @@
 export async function main(ns) {
 	let factions = ["CyberSec", "NiteSec", "The Black Hand", "BitRunners", "Chongqing",
 		"Sector-12", "Netburners", "Tian Di Hui", "Tetrads", //"Slum Snakes",
-		"Speakers for the Dead", "Daedalus"];
+		"Speakers for the Dead", "Daedalus", "The Dark Army"];
 	//factions = factions.sort((fac1, fac2) => ns.getServerRequiredHackingLevel(fac1) - )
 	if (ns.args[0] === "c") {
 		ns.args[0] = "combat";
@@ -82,12 +82,17 @@ export async function main(ns) {
 			type: t.combat
 		},
 		{
-			name: "Augmented Targeting I",
+			name: "Augmented Targeting",
 			skip: true,
 			type: t.combat
 		},
 		{
-			name: "Augmented Targeting II",
+			name: "Combat Rib",
+			skip: true,
+			type: t.combat
+		},
+		{
+			name: "Graphene Bionic Arms Upgrade",
 			skip: true,
 			type: t.combat
 		},
@@ -137,7 +142,7 @@ export async function main(ns) {
 			let augInfo = undefined;
 			let skip = false;
 			for (const info of augsInfo) {
-				if (info.name === aug) {
+				if (aug.startsWith(info.name)) { // e.g. Combat Rib I / II / III
 					augInfo = info;
 					if (augInfo.skip && typeChosen !== augInfo.type) {
 						skip = true;
