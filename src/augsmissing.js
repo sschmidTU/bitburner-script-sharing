@@ -1,98 +1,130 @@
 /** @param {NS} ns **/
 export async function main(ns) {
 	let factions = ["CyberSec", "NiteSec", "The Black Hand", "BitRunners", "Chongqing",
-		"Tian Di Hui", "Sector-12", "Tetrads",
+		"Sector-12", "Netburners", "Tian Di Hui", "Tetrads", //"Slum Snakes",
 		"Speakers for the Dead", "Daedalus"];
 	//factions = factions.sort((fac1, fac2) => ns.getServerRequiredHackingLevel(fac1) - )
+	if (ns.args[0] === "c") {
+		ns.args[0] = "combat";
+	}
+	const t = { // enum not available in javascript
+		combat: 0,
+		hack: 1,
+		crime: 2,
+		general: 3,
+		companyWork: 4
+	};
+	let typeChosen = t[ns.args[0]];
 	const augsInfo = [
 		{
 			name: "Neuroreceptor Management Implant",
 			skip: false,
-			description: "makes focus unnecessary"
+			description: "makes focus unnecessary",
+			type: t.hack
 		},
 		{
 			name: "Neuregen Gene Modification",
 			skip: false,
-			description: "+40% hack xp"
+			description: "+40% hack xp",
+			type: t.hack
 		},
 		{
 			name: "Power Recirculation Core",
 			skip: false,
-			description: "Insane"
+			description: "Insane",
+			type: t.hack
 		},
 		{
 			name: "Unstable Circadian Modulator",
 			skip: false,
-			description: "+15% hack, +100% hack xp" 
+			description: "random effects per aug loop, can be strong", //+15% hack, +100% hack xp once :O
+			type: t.crime
 		},
 		{
 			name: "The Shadow's Simulacrum",
 			skip: false,
-			description: "+15% rep"
+			description: "+15% rep",
+			type: t.general
 		},
 		{
 			name: "Bionic Spine",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "Bionic Legs",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "Graphene BrachiBlades Upgrade",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "HemoRecirculator",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "LuminCloaking-V1 Skin Implant",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "LuminCloaking-V2 Skin Implant",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "Bionic Arms",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "Augmented Targeting I",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "Augmented Targeting II",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "Synthetic Heart",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "Synfibril Muscle",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "NEMEAN Subdermal Weave",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "Nanofiber Weave",
-			skip: true
+			skip: true,
+			type: t.combat
 		},
 		{
 			name: "Speech Processor Implant",
-			skip: true
+			skip: true,
+			type: t.companyWork
 		},
 		{
 			name: "Nuoptimal Nootropic Injector Implant",
-			skip: true
+			skip: true,
+			type: t.companyWork
 		},
 		{
 			name: "Speech Enhancement",
-			skip: true
+			skip: true,
+			type: t.companyWork
 		},
 	];
 	const augsOwned = ns.getOwnedAugmentations();
@@ -107,7 +139,7 @@ export async function main(ns) {
 			for (const info of augsInfo) {
 				if (info.name === aug) {
 					augInfo = info;
-					if (augInfo.skip) {
+					if (augInfo.skip && typeChosen !== augInfo.type) {
 						skip = true;
 					}
 					break;
