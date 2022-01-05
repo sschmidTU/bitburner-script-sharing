@@ -76,7 +76,7 @@ export async function main(ns) {
 }
 
 async function setOptions(ns, opts, scripts, homeram) {
-	let options = JSON.parse(ns.read("options.txt"))
+	let options = JSON.parse(ns.read("options.script"))
 	const condition1 = (options.homeram > 1024 && homeram > 1024)
 	const condition2 = options.homeram == homeram
 	const alwaysUpdate = ns.args[0] == "set"
@@ -85,8 +85,8 @@ async function setOptions(ns, opts, scripts, homeram) {
 	for (const opt in opts) {
 		options[opt] = opts[opt]
 	}
-	await ns.write("options.txt", JSON.stringify(options, null, 2), "w")
-	let cron = JSON.parse(ns.read("cron.txt"))
+	await ns.write("options.script", JSON.stringify(options, null, 2), "w")
+	let cron = JSON.parse(ns.read("cron.script"))
 	for (const script in scripts) {
 		if (scripts[script]) {
 			cron[script+".js"] = scripts[script]

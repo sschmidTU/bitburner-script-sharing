@@ -8,7 +8,7 @@ export async function main(ns) {
 	const isCriming = ns.getPlayer().crimeType !== ""
 	if (isMeasuring || isCriming) return
 	ns.disableLog("ALL")
-	const optionsFile = "options.txt"
+	const optionsFile = "options.script"
 	const TODO = [installBackdoor, augment, installAugmentations, createProgram, donate, checkEndgameFaction, performTask]
 	const options = JSON.parse(ns.read(optionsFile))
 	for (const task of TODO) {
@@ -22,7 +22,7 @@ export async function main(ns) {
 
 function performTask(ns, options) {
 	if (ns.args[0]) return false
-	const institutions = JSON.parse(ns.read("institutions.txt"))
+	const institutions = JSON.parse(ns.read("institutions.script"))
 	const tasks = JSON.parse(ns.read("tasks.txt"))
 	if (tasks.length == 0) return false
 	let maxVal = 0
@@ -39,7 +39,7 @@ function performTask(ns, options) {
 }
 
 export async function setGoals(ns, options, newLevel = -1) {
-	const file = "required_stats.txt"
+	const file = "required_stats.script"
 	let req = JSON.parse(ns.read(file))
 	if (newLevel == -1) {
 		for (let i = 0; i < options.reqLevels.length; i++) {
@@ -72,7 +72,7 @@ function commitCrime(ns, crime) {
 
 function commitCrimeOld(ns, options) {
 	if (ns.args[0]) return false
-	if (ns.isBusy() && ns.getPlayer().numPeopleKilled > JSON.parse(ns.read("required_stats.txt")).kills) return false
+	if (ns.isBusy() && ns.getPlayer().numPeopleKilled > JSON.parse(ns.read("required_stats.script")).kills) return false
 	if (ns.getPlayer().crimeType == "") ns.stopAction()
 	ns.tprint("crimesing")
 	const crimeScript = "crime.js"
@@ -195,9 +195,9 @@ async function installAugmentations(ns, options) {
 }
 
 async function nextFactionGroup(ns) {
-	let options = JSON.parse(ns.read("options.txt"))
+	let options = JSON.parse(ns.read("options.script"))
 	options.factionGroup = (options.factionGroup % 3) + 1
-	await ns.write("options.txt", JSON.stringify(options, null, 2), "w")
+	await ns.write("options.script", JSON.stringify(options, null, 2), "w")
 }
 
 async function checkEndgameFaction(ns, options) {

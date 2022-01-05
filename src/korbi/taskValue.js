@@ -19,9 +19,9 @@ export async function main(ns) {
 }
 
 async function buildTable(ns) {
-	const options = JSON.parse(ns.read("options.txt"))
-	const statsGoal = JSON.parse(ns.read("required_stats.txt"))
-	const institutions = JSON.parse(ns.read("institutions.txt"))
+	const options = JSON.parse(ns.read("options.script"))
+	const statsGoal = JSON.parse(ns.read("required_stats.script"))
+	const institutions = JSON.parse(ns.read("institutions.script"))
 
 	const table = { "tasks": [] }
 	for (let task of allTasks(ns, institutions)) {

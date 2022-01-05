@@ -8,7 +8,7 @@ export function gymWorkout(ns) {
 	if (ns.getPlayer().money < 10e6) return false
 
 	const statsRate = s => `work${s[0].toUpperCase()}${s[1]}${s[2]}ExpGainRate`
-	const institutions = JSON.parse(ns.read("institutions.txt"))
+	const institutions = JSON.parse(ns.read("institutions.script"))
 	const gyms = institutions.gyms
 	const unis = institutions.unis
 
@@ -55,7 +55,7 @@ export function workout(ns, stat) {
 
 export function getMinStat(ns) {
 	const stats = ["strength", "defense", "dexterity", "agility", "charisma"]
-	const requiredLevels = JSON.parse(ns.read("required_stats.txt"))
+	const requiredLevels = JSON.parse(ns.read("required_stats.script"))
 	let minStat = ""
 	let minLevel = 1
 	for (const stat of stats) {

@@ -6,7 +6,7 @@ export async function main(ns) {
         return
     }
     ns.disableLog("getServerMaxRam")
-    const options = JSON.parse(ns.read("options.txt"))
+    const options = JSON.parse(ns.read("options.script"))
     let [lastBoughtRam, nLastBought] = getLargestPurchasedServerRam(ns)
     const serverLimit = ns.getPurchasedServerLimit()
     const servers = ns.getPurchasedServers()

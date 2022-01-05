@@ -3,7 +3,7 @@ import { getServerList, getNumberOfRunningScripts } from "utilities.js"
 /** @param {NS} ns **/
 export async function main(ns) {
 	ns.disableLog("ALL")
-	const optionsFile = "options.txt"
+	const optionsFile = "options.script"
 	const options = JSON.parse(ns.read(optionsFile))
 	await serverLoop(ns, options)
 }

@@ -1,7 +1,7 @@
 import { getServerList, isHackable, isSecure } from "utilities.js"
 /** @param {NS} ns **/
 export async function main(ns) {
-	const options = JSON.parse(ns.read("options.txt"))
+	const options = JSON.parse(ns.read("options.script"))
 	const times = [ns.getHackTime, ns.getWeakenTime, ns.getGrowTime]
 	const scripts = ["hackLoop.ns", "weakenLoop.ns", "growLoop.ns"]
 	const purchased = ns.getPurchasedServers()

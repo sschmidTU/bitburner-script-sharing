@@ -7,7 +7,7 @@ export async function fullWeaken(ns, server) {
 	const weakenAmount = 0.05
 	const host = "home"
 	const script = "weaken.ns"
-	const options = JSON.parse(ns.read("options.txt"))
+	const options = JSON.parse(ns.read("options.script"))
 	while (ns.getServerSecurityLevel(server) > ns.getServerMinSecurityLevel(server) * 1.01) {
 		const security = ns.getServerSecurityLevel(server) - ns.getServerMinSecurityLevel(server)
 		const nThreadsRequired = security / weakenAmount / ns.getServer("home").cpuCores

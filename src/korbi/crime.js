@@ -18,8 +18,8 @@ export function bestCrime(ns) {
 
 function crimeBenefit(ns, crime) {
 	let crimeSum = 0
-	const options = JSON.parse(ns.read("options.txt"))
-	const requiredStats = JSON.parse(ns.read("required_stats.txt"))
+	const options = JSON.parse(ns.read("options.script"))
+	const requiredStats = JSON.parse(ns.read("required_stats.script"))
 	const crimeStats = ns.getCrimeStats(crime)
 	const stats = ["agility", "dexterity", "strength", "defense", "charisma", "hacking"]
 	for (const stat of stats) {

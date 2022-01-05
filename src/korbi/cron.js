@@ -20,7 +20,7 @@ async function cron(ns) {
 				}
 			}
 		}
-		const options = JSON.parse(ns.read("options.txt"))
+		const options = JSON.parse(ns.read("options.script"))
 		await ns.sleep(options.cronSleep)
 		time += options.cronSleep / 1000
 	}
