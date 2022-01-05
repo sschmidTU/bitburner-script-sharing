@@ -3,11 +3,10 @@ import { sum, getServerList } from "utilities.js"
 /** @param {NS} ns **/
 export async function main(ns) {
 	ns.disableLog('ALL');
-	const optionsFile = "options.txt"
 	let time = 0
 	let targetTimes = {}
 	while (true) {
-		const options = JSON.parse(ns.read(optionsFile))
+		const options = JSON.parse(ns.read("options.script"))
 		const targets = getMoneyTarget(ns, options)
 		for (const t of targets) {
 			if (!(t in targetTimes)) {

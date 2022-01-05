@@ -6,7 +6,7 @@ export async function main(ns) {
 	const contractType = ns.codingcontract.getContractType(filename, server).replace(/\s+/g, '')
 	ns.tprint("Type: " + contractType)
 
-	const contractSolver = `${contractType}.js`
+	const contractSolver = `codingContracts/${contractType}.js`
 	ns.tprint(contractSolver)
 	if (exists(ns, contractSolver)) {
 		ns.tprint("Running Solver: " + contractSolver)

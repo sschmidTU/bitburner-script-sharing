@@ -1,7 +1,7 @@
 /** @param {NS} ns **/
 export async function main(ns) {
 	const h = ns.hacknet
-	const options = JSON.parse(ns.read("options.txt"))
+	const options = JSON.parse(ns.read("options.script"))
 	const maxPrice = Math.min(options.maxHacknetCost * ns.getPlayer().money, ns.getServerMoneyAvailable("home") - options.keepMoney)
 	const [doUpgrade, node, cost] = getCheapestItem(h)
 	if (cost > maxPrice) return

@@ -79,7 +79,8 @@ async function setOptions(ns, opts, scripts, homeram) {
 	let options = JSON.parse(ns.read("options.txt"))
 	const condition1 = (options.homeram > 1024 && homeram > 1024)
 	const condition2 = options.homeram == homeram
-	if (condition1 || condition2) return false 
+	const alwaysUpdate = ns.args[0] == "set"
+	if (!alwaysUpdate && (condition1 || condition2)) return false 
 	options.homeram = homeram
 	for (const opt in opts) {
 		options[opt] = opts[opt]
