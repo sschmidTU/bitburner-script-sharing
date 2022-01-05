@@ -1,0 +1,10 @@
+{
+  "hacking": 100,
+  "strength": 100,
+  "defense": 100,
+  "agility": 100,
+  "dexterity": 100,
+  "charisma": 100,
+  "kills": 10,
+  "money": 1000000
+}

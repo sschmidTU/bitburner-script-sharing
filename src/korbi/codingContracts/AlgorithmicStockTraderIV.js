@@ -15,9 +15,10 @@ function stockTrade4(k, data) {
 	const [mins, maxs] = findallminmax(data)
 	while (mins.length > k) {
 		const [iMin, iMax] = findLowestRemovableTrade(mins, maxs)
-		mins.splice(iMin)
-		maxs.splice(iMax)
+		mins.splice(iMin, 1)
+		maxs.splice(iMax, 1)
 	}
+
 	return minmaxsum(mins, maxs)
 }
 
@@ -30,6 +31,7 @@ function findLowestRemovableTrade(mins, maxs) {
 			if (maxs[iMax] - mins[iMin] < lowestVal) {
 				lowestIMin = iMin
 				lowestIMax = iMax
+				lowestVal = maxs[iMax] - mins[iMin]
 			}
 		}
 	}

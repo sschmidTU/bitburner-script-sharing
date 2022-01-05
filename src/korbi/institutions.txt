@@ -1,0 +1,17 @@
+{
+    "gyms": ["millenium fitness gym", "powerhouse gym", "iron gym", "snap fitness gym", "crush fitness gym"],
+    "unis": ["ZB Institute of Technology", "summit university", "rothman university"],
+    "corporations": {
+        "Four Sigma": [225, "Sector-12"], 
+        "Blade Industries": [225, "Sector-12"], 
+        "KuaiGong International": [225, "Chingqong"], 
+        "OmniTek Incorporated": [225, "Volhaven"], 
+        "Bachman & Associates": [225, "Aevum"], 
+        "Clarke Incorporated": [225, "Aevum"], 
+        "Fulcrum Technologies": [225, "Aevum", "noSecurity"],
+        "ECorp": [250, "Aevum"],
+        "MegaCorp": [250, "Sector-12"],
+        "NWO": [250, "Volhaven"]
+    },
+    "syndicates": ["Slum Snakes", "Tetrads", "Silhouette", "Speakers for the Dead", "The Dark Army", "The Syndicate"]
+}

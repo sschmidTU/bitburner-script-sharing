@@ -1,4 +1,4 @@
-import { exists } from "utilities.ns"
+import { exists } from "utilities.js"
 /** @param {NS} ns **/
 export async function main(ns) {
 	const filename = ns.args[0]
@@ -6,11 +6,11 @@ export async function main(ns) {
 	const contractType = ns.codingcontract.getContractType(filename, server).replace(/\s+/g, '')
 	ns.tprint("Type: " + contractType)
 
-	const contractSolver = `${contractType}.ns`
+	const contractSolver = `${contractType}.js`
 	ns.tprint(contractSolver)
 	if (exists(ns, contractSolver)) {
 		ns.tprint("Running Solver: " + contractSolver)
-		ns.run(contractSolver, 1, filename, server)
+		ns.spawn(contractSolver, 1, filename, server)
 
 		for (let time = 0; time < 10000; time += 1000) {
 			const info = ns.readPort(1)
