@@ -8,4 +8,4 @@ export async function main(ns) {
 	//ns.run("buyHardware.ns")
 	//ns.run("hacknet.ns")
 	//ns.run("estimateHackWorth.ns")
-}u
+}

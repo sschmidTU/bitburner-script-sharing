@@ -3,6 +3,7 @@ import { sum, getServerList } from "utilities.js"
 /** @param {NS} ns **/
 export async function main(ns) {
 	ns.disableLog('ALL');
+	ns.tail()
 	let time = 0
 	let targetTimes = {}
 	while (true) {
@@ -140,17 +141,23 @@ export function getThreadsRatio(ns, options, server) {
 	const securityIncreaseGrowth = (ns.growthAnalyzeSecurity(nGrowth))
 	const searchNWeakenGrowth = n => (ns.weakenAnalyze(n) < securityIncreaseGrowth * options.additionalWeakeningPerCycle)
 	const nWeakenGrowth = Math.ceil(binarySearch(searchNWeakenGrowth, 1, options.maxThreadRatio * nHack)[1])
+	
+	const securityMissing = ns.getServerSecurityLevel(server) - ns.getServerMinSecurityLevel(server)
+	const nAdditionalWeaken = Math.floor(securityMissing / 0.05)
+	let nWeaken = nWeakenHack + nWeakenGrowth
+	nWeaken = Math.min(nWeaken + nAdditionalWeaken, 2 * nWeaken)
 
-	return [nHack, nWeakenHack + nWeakenGrowth, nGrowth]
+	return [nHack, nWeaken, nGrowth]
 }
 
 function getServerThreads(ns, options, server) {
 	let threads = Math.floor((ns.getServerMaxRam(server) - ns.getServerUsedRam(server)) / options.ramPerThread)
-	if (server === "home") {
+	if (server === options.host) {
+		threads = Math.floor((ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - options.keepRam) / options.ramPerThread)
+	} else if (server === "home") {
 		threads = Math.floor((ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - options.keepRamHome) / options.ramPerThread)
-		if (ns.scriptRunning("fullWeaken.js", "home")) {
-			threads = Math.floor(threads / 3)
-		}
+		ns.tprint("Keeping " + options.keepRamHome + "RAM on " + server + " (" + threads + ")")
+		ns.tprint("Max ram: " + ns.getServerMaxRam("home") + " used: " + ns.getServerUsedRam("home"))
 	}
 	return threads
 }

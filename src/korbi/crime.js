@@ -1,6 +1,7 @@
 /** @param {NS} ns **/
 export async function main(ns) {
-	if (ns.args[0] || ns.getPlayer().crimeType !== "") return
+	const p = ns.getPlayer()
+	if (ns.args[0] || p.crimeType !== "" || p.createProgramName != "") return
 	ns.commitCrime(bestCrime(ns))
 }
 

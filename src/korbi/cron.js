@@ -12,15 +12,23 @@ async function cron(ns) {
 	}
 	let time = 0
 	while (true) {
+		const options = JSON.parse(ns.read("options.script"))
 		for (const script in table) {
 			if (time > table[script]) {
-				if (ns.run(script, 1, ...ns.args) != 0) {
+				let host = options.host
+				if (options.homeScripts.includes(script)) {
+					host = "home"
+				}
+				if (host != "home") {
+					await ns.scp(script, "home", options.host)
+				}
+				if (ns.exec(script, host, 1, ...ns.args) != 0) {
 					table[script] = time + JSON.parse(ns.read("cron.txt"))[script]
 					break
 				}
 			}
 		}
-		const options = JSON.parse(ns.read("options.script"))
+		
 		await ns.sleep(options.cronSleep)
 		time += options.cronSleep / 1000
 	}

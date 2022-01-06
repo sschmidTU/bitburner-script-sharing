@@ -10,7 +10,7 @@ export function getServerList(ns, excludeServers = ["home"]) {
 		} else {
 			if (isRootable(ns, item)) {
 				ns.print("Rooting: " + item)
-				ns.run("r.ns", 1, item)
+				ns.run("root.js", 1, item)
 			}
 		}
 		const s2 = ns.scan(item)
@@ -97,5 +97,12 @@ export function getConnectionPath(ns, target, start="home", backConnect="") {
 export function connect(ns, target) {
 	for (const server of getConnectionPath(ns, target)) {
 		ns.connect(server)
+	}
+}
+
+export async function execute(ns, script, host, ...args) {
+	if (host != "home") {
+		await ns.scp(script, "home", host)
+		ns.exec(script, host, 1, ...args)
 	}
 }

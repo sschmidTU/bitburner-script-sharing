@@ -26,7 +26,7 @@ async function serverLoop(ns, options) {
 			serversFile[server] = value
 			if ((ns.getServerSecurityLevel(server) > ns.getServerMinSecurityLevel(server) * options.securityThreshold) && (getNumberOfRunningScripts(ns, "home", "fullWeaken.js") < options.maxWeakenTargets)) {
 				ns.print("Weakaning target " + server)
-				ns.run("fullWeaken.js", 1, server)
+				ns.exec("fullWeaken.js", "home", 1, server)
 			}
 		}
 		await ns.sleep(100)

@@ -1,4 +1,4 @@
-import { exists } from "utilities.js"
+import { exists, execute } from "utilities.js"
 /** @param {NS} ns **/
 export async function main(ns) {
 	const filename = ns.args[0]
@@ -10,7 +10,7 @@ export async function main(ns) {
 	ns.tprint(contractSolver)
 	if (exists(ns, contractSolver)) {
 		ns.tprint("Running Solver: " + contractSolver)
-		ns.spawn(contractSolver, 1, filename, server)
+		execute(contractSolver, "home", filename, server)
 
 		for (let time = 0; time < 10000; time += 1000) {
 			const info = ns.readPort(1)
