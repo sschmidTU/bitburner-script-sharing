@@ -4,20 +4,16 @@ export async function main(ns) {
 	const options = JSON.parse(ns.read("options.script"))
 	const maxPrice = Math.min(options.maxHacknetCost * ns.getPlayer().money, ns.getServerMoneyAvailable("home") - options.keepMoney)
 	const [doUpgrade, node, cost] = getCheapestItem(h)
-	if (cost > maxPrice) return
-	if (h.numNodes() < h.maxNumNodes() && h.getPurchaseNodeCost() < cost) {
-		h.purchaseNode()
-	} else {
+	if (cost < maxPrice)
 		doUpgrade(node, 1)
-	}
 }
 
 function getCheapestItem(h) {
 	const upgradeItems = [h.getLevelUpgradeCost, h.getRamUpgradeCost, h.getCoreUpgradeCost]
-	const doUpgradeItems = [h.upgradeLevel, h.upgradeRam, h.upgradeCore]
+	const doUpgradeItems = [h.upgradeLevel, h.upgradeRam, h.upgradeCore, h.purchaseNode]
 	let cheapestNode = -1
-	let cheapestUpgradeType = 0
-	let cheapestCost = Infinity
+	let cheapestUpgradeType = 3
+	let cheapestCost = h.getPurchaseNodeCost()
 	for (let node = 0; node < h.numNodes(); node++) {
 		for (let i = 0; i < upgradeItems.length; i++) {
 			let cost = upgradeItems[i](node, 1)

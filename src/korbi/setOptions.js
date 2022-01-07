@@ -5,8 +5,9 @@ export async function main(ns) {
 	let opts = {}
 	let scripts = {}
 	// default
+	opts.homeScripts = ["runScript.js", "estimateHackXp.js", "setOptions.js", "setScheduleTime.js", "cct.js"]
 	opts.keepRamHome = 15
-	opts.money_weight = 1
+	opts.money_weight = 100
 	opts.onlyGrowThreshold = 0.1
 	opts.levelUpHack = true
 	opts.maxHacknetCost = 0.01

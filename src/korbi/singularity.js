@@ -20,7 +20,7 @@ export async function main(ns) {
 	}
 }
 
-function performTask(ns, options) {
+export function performTask(ns, options) {
 	if (ns.args[0]) return false
 	const institutions = JSON.parse(ns.read("institutions.script"))
 	const tasks = JSON.parse(ns.read("tasks.txt"))
