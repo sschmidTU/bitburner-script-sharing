@@ -176,7 +176,7 @@ export function performAction(ns, options, institutions, task) {
 	return task.value > options.taskValueThreshold
 }
 
-function crimeBenefit(ns, options, requiredStats, crime) {
+export function crimeBenefit(ns, options, requiredStats, crime) {
 	let crimeSum = 0
 	const crimeStats = ns.getCrimeStats(crime)
 	const stats = ["agility", "dexterity", "strength", "defense", "charisma", "hacking"]
