@@ -21,7 +21,7 @@ export async function scan(ns, server) {
 }
 
 function isStory(file) {
-	return file.includes(".lit") || file.includes(".txt")
+	return file.includes(".lit")
 }
 
 function isCodingContract(file) {

@@ -23,6 +23,7 @@ export async function main(ns) {
 	scripts.taskValue = 50
 	scripts.singularity = 20
 	scripts.upgradeHome = 50
+	scripts.performTask = false
 	if (availableRam < 512) {
 		scripts.singularity = false
 		scripts["createProgram"] = 20
@@ -52,12 +53,14 @@ export async function main(ns) {
 		opts.hackPercent = 0.5
 		opts.workOnProgram = 1
 		opts.buyProgramThreshold = 1
+		scripts.performTask = 20
+		scripts.crime = false
 	}
 	const isNew = await setOptions(ns, opts, scripts, availableRam)
-	if (isNew && ns.args[0] != "set") {
+	if (isNew) {
 		ns.tprint("Killing and restarting cron")
 		ns.scriptKill("cron.js", "home")
-		ns.spawn("cron.js", 1, ...ns.args)
+		ns.spawn("cron.js")
 	}
 }
 
