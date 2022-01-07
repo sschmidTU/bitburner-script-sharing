@@ -77,7 +77,7 @@ export function isSecure(ns, server, options) {
 }
 
 export function exists(ns, file) {
-	return ns.fileExists(file)
+	return ns.fileExists("/" + file)
 }
 
 export function getConnectionPath(ns, target, start="home", backConnect="") {

@@ -14,7 +14,6 @@ export async function scan(ns, server) {
 		if (isStory(f)) {
 			await ns.scp(f, server, "home")
 		} else if (isCodingContract(f)) {
-			ns.tprint("running cct")
 			await ns.write("run_script.script", "\ncct.js " + f + " " + server)
 			//ns.spawn("cct.js", 1, f, server)
 		}
