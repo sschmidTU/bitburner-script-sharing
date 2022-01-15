@@ -1,8 +1,9 @@
 import { workout } from "gym.js"
 /** @param {NS} ns **/
 export async function main(ns) {
+	ns.disableLog("ALL")
+	if (ns.args[0] || ns.getPlayer().crimeType !== "") return
 	await buildTable(ns)
-	if (ns.args[0]) return
 	ns.run("runin.js", 1, 1, "singularity.js")
 	/*
 	const institutions = JSON.parse(ns.read("institutions.txt"))
@@ -20,14 +21,23 @@ export async function main(ns) {
 
 async function buildTable(ns) {
 	const options = JSON.parse(ns.read("options.script"))
+	await ns.scp("required_stats.script", "home", options.host)
 	const statsGoal = JSON.parse(ns.read("required_stats.script"))
 	const institutions = JSON.parse(ns.read("institutions.script"))
 
 	const table = { "tasks": [] }
+	const t = Date.now()
+	let last = t
+	ns.print("start: " + (Date.now() - t))
 	for (let task of allTasks(ns, institutions)) {
-		task.value = taskValue(ns, options, institutions, statsGoal, task)
+		task.value = await taskValue(ns, options, institutions, statsGoal, task)
 		table["tasks"].push(task)
+		const d = Date.now()
+		if (d - last > 20)
+			ns.print("big: " + (d - last) + " task: " + task.type)
+		last = d
 	}
+	ns.print("end: " + (Date.now() - t))
 	await ns.write("tasks.txt", JSON.stringify(table, null, 2), "w")
 }
 
@@ -57,16 +67,6 @@ function allTasks(ns, institutions) {
 	}
 	return tasks
 }
-/*
-function taskValue(ns, options, statsGoal, task) {
-	const valueFunction = {
-		"crime": crimeBenefit,
-		"work": workBenefit,
-		"train": workout
-	}
-	return valueFunction(ns, options, statsGoal, task)
-}
-*/
 
 function isOwnFaction(ns, corp) {
 	for (const faction of ns.getPlayer().factions) {
@@ -76,10 +76,20 @@ function isOwnFaction(ns, corp) {
 	return false
 }
 
-function taskValue(ns, options, institutions, statsGoal, task) {
+async function taskValue(ns, options, institutions, statsGoal, task) {
+	const workoutFile = "workout_gain_" + task.subtype + ".txt"
 	if (task.type == "crime") return crimeBenefit(ns, options, statsGoal, task.subType)
 	if (task.type == "work" && isOwnFaction(ns, task.at)) return 0
-	const statsGain = measure(ns, options, institutions, task)
+
+	let statsGain
+	if (task.type == "train" && ns.fileExists(workoutFile))
+		statsGain = parseFile(ns, workoutFile)
+	else {
+		statsGain = measure(ns, options, institutions, task)
+		if (task.type == "train")
+			await saveFile(ns, workoutFile, statsGain)
+	}
+	
 	const p = ns.getPlayer()
 	const stats = ["agility", "dexterity", "strength", "defense", "charisma", "hacking", "money"]
 	let value = 0
@@ -90,7 +100,18 @@ function taskValue(ns, options, institutions, statsGoal, task) {
 		task.time = reputationTime(ns, options, statsGain.rep, task)
 		value += options.repDefaultTime / task.time
 	}
+	if (task.subType.includes("lade")) {
+		value *= 1.1
+	}
 	return value
+}
+
+function parseFile(ns, file) {
+	return JSON.parse(ns.read(file))
+}
+
+async function saveFile(ns, file, data) {
+	await ns.write(file, JSON.stringify(data, null, 2), "w")
 }
 
 function reputationTime(ns, options, repGain, task) {
@@ -169,7 +190,7 @@ export function performAction(ns, options, institutions, task) {
 		ns.workForCompany(task.at, task.subType)
 	}
 	if (task.type == "faction") {
-		ns.workForFaction(task.at, task.subType)
+		ns.workForFaction(task.at, task.subType) // TODO takes ~:150ms realtime
 	}
 	if (task.type == "crime") return ns.commitCrime(task.subType)
 	if (task.type == "train") return workout(ns, task.subType)
@@ -185,7 +206,10 @@ export function crimeBenefit(ns, options, requiredStats, crime) {
 	}
 	crimeSum += options.karma_weight * crimeStats.karma
 	crimeSum += options.kill_weight * crimeStats.kills * requiredStats.kills / (ns.getPlayer().numPeopleKilled + 1)
-	crimeSum += options.money_weight * ns.getCrimeChance(crime) * crimeStats.money / ns.getPlayer().money
+	//ns.tail()
+	//ns.print("before money: " + crimeSum)
+	crimeSum += options.money_weight * requiredStats.money * ns.getCrimeChance(crime) * crimeStats.money / ns.getPlayer().money
+	//ns.print("after money: " + crimeSum)
 	crimeSum /= (crimeStats.time / 1e3)
 	return crimeSum * options.crime_factor
 }

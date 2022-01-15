@@ -106,3 +106,7 @@ export async function execute(ns, script, host, ...args) {
 		ns.exec(script, host, 1, ...args)
 	}
 }
+
+export async function writeOptions(ns, options) {
+	await ns.write("options.script", JSON.stringify(options, null, 2), "w")
+}

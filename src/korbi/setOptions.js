@@ -7,15 +7,15 @@ export async function main(ns) {
 	// default
 	opts.homeScripts = ["runScript.js", "estimateHackXp.js", "setOptions.js", "setScheduleTime.js", "cct.js"]
 	opts.keepRamHome = 15
-	opts.money_weight = 1000
 	opts.onlyGrowThreshold = 0.1
 	opts.levelUpHack = true
 	opts.maxHacknetCost = 0.01
 	opts.cronSleep = 700
 	opts.maxWeakenTargets = 5
-	opts.hackPercent = 0.9
+	opts.hackPercent = 0.5
 	opts.workOnProgram = 1000
 	opts.buyProgramThreshold = 1
+	opts.maxServersPerSize = 3
 	scripts["joinFaction"] = 30
 	scripts.crime = false
 	scripts["createProgram"] = false
@@ -50,7 +50,6 @@ export async function main(ns) {
 	}
 	else if (availableRam == 256) {
 		opts.maxWeakenTargets = 3
-		opts.hackPercent = 0.5
 		opts.workOnProgram = 1
 		opts.buyProgramThreshold = 1
 		scripts.performTask = 20
@@ -86,7 +85,7 @@ async function setOptions(ns, opts, scripts, availableRam) {
 		}
 	}
 	await ns.write("cron.txt", JSON.stringify(cron, null, 2), "w")
-	options.keepRam = maxRamRequired
+	options.keepRam = maxRamRequired * 1.1
 	for (const opt in opts) {
 		options[opt] = opts[opt]
 	}

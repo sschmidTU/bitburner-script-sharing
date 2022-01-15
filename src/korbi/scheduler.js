@@ -156,8 +156,8 @@ function getServerThreads(ns, options, server) {
 		threads = Math.floor((ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - options.keepRam) / options.ramPerThread)
 	} else if (server === "home") {
 		threads = Math.floor((ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - options.keepRamHome) / options.ramPerThread)
-		ns.tprint("Keeping " + options.keepRamHome + "RAM on " + server + " (" + threads + ")")
-		ns.tprint("Max ram: " + ns.getServerMaxRam("home") + " used: " + ns.getServerUsedRam("home"))
+		//ns.tprint("Keeping " + options.keepRamHome + "RAM on " + server + " (" + threads + ")")
+		//ns.tprint("Max ram: " + ns.getServerMaxRam("home") + " used: " + ns.getServerUsedRam("home"))
 	}
 	return threads
 }
