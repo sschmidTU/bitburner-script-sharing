@@ -1,14 +1,12 @@
 /** @param {NS} ns **/
 
 export function getServerList(ns, excludeServers=["home"]) {
-	var list = ns.scan("home")
-	var final = []
-	let cnt = 0
-	while (!list.length == 0 && cnt++ < 1000) {
-		var item = list.pop()
-		if (ns.hasRootAccess(item))
-			final.push(item)
-		else if (isRootable(ns, item))
+	let list = ns.scan("home")
+	let final = []
+	while (list.length > 0) {
+		const item = list.pop()
+		final.push(item)
+		if (!ns.hasRootAccess(item) && isRootable(ns, item))
 			ns.run("root.js", 1, item)
 
 		for (const s of ns.scan(item)) {
@@ -16,7 +14,7 @@ export function getServerList(ns, excludeServers=["home"]) {
 				list.push(s)
 		}
 	}
-	return final.filter(s => !excludeServers.includes(s))
+	return final.filter(ns.hasRootAccess).filter(s => !excludeServers.includes(s))
 }
 
 export function getNumberOfRunningScripts(ns, server, script) {
@@ -95,13 +93,13 @@ export async function writeOptions(ns, options) {
 	await writeFile(ns, "options.script", options)
 }
 
-export function getFile(ns, file) {
-	return JSON.parse(ns.read(file))
-} 
-
 export function getOptions(ns) {
 	return getFile(ns, "options.script")
 }
+
+export function getFile(ns, file) {
+	return JSON.parse(ns.read(file))
+} 
 
 export function getTasks(ns) {
 	const obj = getFile(ns, "tasks.txt")
@@ -111,4 +109,24 @@ export function getTasks(ns) {
 
 export function getInstitutions(ns) {
 	return getFile(ns, "institutions.script")
+}
+
+export function getServerXp(ns) {
+	return getFile(ns, "servers_hack_xp.txt")
+}
+
+export function getGoals(ns) {
+	return getFile(ns, "required_stats.txt")
+}
+
+export async function writeServerXp(ns, xp) {
+	await writeFile(ns, "servers_hack_xp.txt", xp)
+}
+
+export async function updateOptions(ns, option, value) {
+	let options = getOptions(ns)
+	if (options[option] != value) {
+		options[option] = value
+		await writeOptions(ns, options)
+	}
 }

@@ -16,6 +16,8 @@ export async function main(ns) {
 	opts.workOnProgram = 1000
 	opts.buyProgramThreshold = 1
 	opts.maxServersPerSize = 3
+	opts.minScheduleThreads = 10
+	opts.minHackXpThreads = 10
 	scripts["joinFaction"] = 30
 	scripts.crime = false
 	scripts["createProgram"] = false
@@ -25,6 +27,7 @@ export async function main(ns) {
 	scripts.upgradeHome = 50
 	scripts.performTask = false
 	if (availableRam < 512) {
+		opts.minScheduleThreads = 3
 		scripts.singularity = false
 		scripts["createProgram"] = 20
 		scripts.crime = 3

@@ -21,9 +21,16 @@ export async function main(ns) {
 	//ns.workForCompany("KuaiGong International", "software")
 	//ns.tprint(getServerList(ns))
 	//ns.tprint(ns.getFactionFavorGain("Fulcrum Secret Technologies"))
-	//ns.tprint(ns.getWeakenTime(ns.args[0]))
+	//ns.print(ns.getWeakenTime("n00dles"))
 	//ns.tprint(ns.getHackTime(ns .args[0]))
 	//ns.tprint(ns.getOwnedAugmentations(true).length)
+	//ns.print(ns.read("servers_money_factor.txt"))
+	//ns.print(ns.read("servers_hack_xp.txt"))
+	//ns.print(ns.read("servers_hack_factor.txt"))
+	//ns.run("watchServer.js", 1, "n00dles")
+	//ns.run("watchServer.js", 1, "foodnstuff")
+	//ns.run("watchServer.js", 1, "harakiri-sushi")
+	//getServerList(ns)
 	
 }
 

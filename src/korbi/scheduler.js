@@ -1,4 +1,4 @@
-import { sum, getServerList } from "utilities.js"
+import { sum, getServerList, updateOptions } from "utilities.js"
 
 /** @param {NS} ns **/
 export async function main(ns) {
@@ -16,6 +16,7 @@ export async function main(ns) {
 		}
 		let servers = getServerList(ns, []).filter(f => ns.hasRootAccess(f))
 		await prepareServers(ns, options, servers)
+		await updateLoopTime(ns, servers)
 
 		targetTimes = schedule(ns, options, servers, targets, targetTimes, time)
 
@@ -31,6 +32,7 @@ export async function main(ns) {
 
 function exploitXp(ns, options, servers, target, type) {
 	const [nThreads, freeSlots] = getFreeThreadSlots(ns, options, servers)
+	if (nThreads < options.minHackXpThreads) return
 	let threads = [0, 0, 0]
 	if (type == 1) { // weaken
 		threads = [0, nThreads, 0]
@@ -47,6 +49,12 @@ function exploitXp(ns, options, servers, target, type) {
 	}
 
 	deploy(ns, options, threads, target, freeSlots)
+}
+
+async function updateLoopTime(ns, servers) {
+	const minWeakenTime = getMinWeakenTime(ns, servers)
+	const loopTime = Math.floor((minWeakenTime + 400) / 200) * 100
+	await updateOptions(ns, "scheduleLoopTime", loopTime)
 }
 
 function getXpTarget(ns, options) {
@@ -74,6 +82,14 @@ async function prepareServers(ns, options, servers) {
 	}
 }
 
+function getMinWeakenTime(ns, servers) {
+	let minWeakenTime = 100e3
+	for (const server of servers) {
+		minWeakenTime = Math.min(minWeakenTime, ns.getWeakenTime(server))
+	}	
+	return minWeakenTime
+}
+
 function schedule(ns, options, servers, targets, targetTimes, time) {
 	ns.print("targets: " + targets)
 	for (const target of targets) {
@@ -81,7 +97,7 @@ function schedule(ns, options, servers, targets, targetTimes, time) {
 			continue
 		}
 		const [nThreads, freeSlots] = getFreeThreadSlots(ns, options, servers)
-		if (nThreads < 3) {
+		if (nThreads < options.minScheduleThreads) {
 			ns.print("Finished loop!")
 			return targetTimes
 		}

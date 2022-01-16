@@ -1,5 +1,5 @@
-import { getCrackNames, exists, connect, writeOptions, getOptions, getTasks, getInstitutions } from "utilities.js"
 import { performAction } from "taskValue.js"
+import { getCrackNames, exists, connect, writeOptions, getOptions, getTasks, getInstitutions, getGoals, getServerList } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
 	//ns.tail()
@@ -45,8 +45,7 @@ function getBestTask(tasks) {
 }
 
 export async function setGoals(ns, options, newLevel = -1) {
-	const file = "required_stats.script"
-	let req = JSON.parse(ns.read(file))
+	let req = getGoals(ns)
 	if (newLevel == -1) {
 		for (let i = 0; i < options.reqLevels.length; i++) {
 			if (options.reqLevels[i] == req.strength) {
@@ -68,13 +67,14 @@ export async function setGoals(ns, options, newLevel = -1) {
 }
 
 function commitCrime(ns, crime) {
-	if (ns.args[0]) return false
+	if (keepFocus(ns)) return false
 	const time = ns.getCrimeStats(crime).time
-	const loopTime = 1e3 * 20
+	const loopTime = 20e3
 	const n = Math.ceil(loopTime / time)
 	ns.print(crime + " " + time + " " + loopTime + " " + n)
-	const parameterToDistinguishns = ns.getTimeSinceLastAug()
-	ns.run("nLoop.js", 1, "simpleCrime.js", n, time, crime, parameterToDistinguishns)
+	const parameterToDistinguish = ns.getTimeSinceLastAug()
+	ns.run("nLoop.js", 1, "simpleCrime.js", n, time, crime, parameterToDistinguish)
+	return true
 }
 
 export function createProgram(ns, options) {
@@ -92,7 +92,7 @@ export function createProgram(ns, options) {
 			if (prices[i] < options.buyProgramThreshold * ns.getPlayer().money) {
 				checkBuyTor(ns)
 				ns.purchaseProgram(progs[i])
-			} else if (prices[i] > options.workOnProgram * ns.getPlayer().money && ns.getHackingLevel() >= levels[i] && !ns.args[0]) {
+			} else if (prices[i] > options.workOnProgram * ns.getPlayer().money && ns.getHackingLevel() >= levels[i] && !keepFocus(ns)) {
 				ns.print("Creating program: " + progs[i])
 				ns.createProgram(progs[i])
 				return true
@@ -103,17 +103,19 @@ export function createProgram(ns, options) {
 }
 
 function checkBuyTor(ns) {
-	if (!ns.getPlayer().tor) {
+	if (!ns.getPlayer().tor)
 		ns.purchaseTor()
-	}
 }
 
 async function installBackdoor(ns) {
 	const file = "backdoors.txt"
-	const servers = ["powerhouse-fitness", "CSEC", "avmnite-02h", "I.I.I.I", "run4theh111z", "fulcrumassets"]//, "w0r1d_d43m0n"]
+	const backdoored = ns.read(file)
+	const excludedServers = ns.getPurchasedServers()
+	excludedServers.push("w0r1d_d43m0n")
+	const servers = getServerList(ns, excludedServers)//["powerhouse-fitness", "CSEC", "avmnite-02h", "I.I.I.I", "run4theh111z", "fulcrumassets"]//, "w0r1d_d43m0n"]
 	for (const server of servers) {
 		const canHack = ns.getServerRequiredHackingLevel(server) <= ns.getHackingLevel() && ns.hasRootAccess(server)
-		const isBackdoored = ns.read(file).includes(server)
+		const isBackdoored = backdoored.includes(server)
 		if (canHack && !isBackdoored) {
 			ns.tprint("Installing backdoor: " + server)
 			connect(ns, server)
