@@ -208,7 +208,7 @@ export function crimeBenefit(ns, options, requiredStats, crime) {
 	crimeSum += options.kill_weight * crimeStats.kills * requiredStats.kills / (ns.getPlayer().numPeopleKilled + 1)
 	//ns.tail()
 	//ns.print("before money: " + crimeSum)
-	crimeSum += options.money_weight * requiredStats.money * ns.getCrimeChance(crime) * crimeStats.money / ns.getPlayer().money
+	crimeSum += options.money_weight * requiredStats.money * Math.pow(ns.getCrimeChance(crime), 1.2) * crimeStats.money / ns.getPlayer().money
 	//ns.print("after money: " + crimeSum)
 	crimeSum /= (crimeStats.time / 1e3)
 	return crimeSum * options.crime_factor
