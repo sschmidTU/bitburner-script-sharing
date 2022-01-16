@@ -204,7 +204,7 @@ function getAllAugmentationsFromOwnFactions(ns) {
 async function installAugmentations(ns, options) {
 	if (ns.args[0]) return
 	if (getNQueuedAugs(ns) >= options.resetAfterAugmentations) {
-		while (augment(ns, options)) { }
+		while (await augment(ns, options)) { }
 		await nextFactionGroup(ns)
 		ns.scriptKill("cron.js", "home")
 		ns.scriptKill("scheduler.js", "home")
