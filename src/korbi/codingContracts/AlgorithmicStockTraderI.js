@@ -1,16 +1,11 @@
+import { solve } from "/cct"
+
 /** @param {NS} ns **/
 export async function main(ns) {
-	const filename = ns.args[0]
-	const server = ns.args[1]
-	const data = ns.codingcontract.getData(filename, server)
-	const solution = stockTrade1(ns, data)
-	ns.tprint("Solution: " + solution)
-	const result = ns.codingcontract.attempt(solution, filename, server)
-	ns.tprint("Result: " + result)
-	ns.writePort(1, "" + result)
+	solve(ns, stockTrade1)
 }
 
-function stockTrade1(ns, data) {
+function stockTrade1(data) {
 	const minLeftArr = getMinLeftArr(data)
 	let maxTrade = 0
 	for (let i = 1; i < data.length; i++) {

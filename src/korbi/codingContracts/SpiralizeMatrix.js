@@ -1,16 +1,11 @@
+import { solve } from "/cct"
+
 /** @param {NS} ns **/
 export async function main(ns) {
-	const filename = ns.args[0]
-	const server = ns.args[1]
-	const data = ns.codingcontract.getData(filename, server)
-	const solution = spiralizeMatrix(ns,data)
-	ns.tprint("Solution: " + solution)
-	const result = ns.codingcontract.attempt(solution, filename, server)
-	ns.tprint("Result: " + result)
-	ns.writePort(1, "" + result)
+	solve(ns, spiralizeMatrix)
 }
 
-function spiralizeMatrix(ns,data) {
+function spiralizeMatrix(data) {
 	const size = [data.length, data[0].length]
 	let result = []
 	let border = [[-1, size[0]], [-1, size[1]]]

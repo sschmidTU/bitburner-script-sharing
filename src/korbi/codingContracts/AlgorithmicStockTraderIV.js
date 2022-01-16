@@ -1,18 +1,14 @@
-import { findallminmax, minmaxsum } from "AlgorithmicStockTraderII.ns"
+import { findallminmax, minmaxsum } from "./AlgorithmicStockTraderII"
+import { solve } from "/cct"
+
 /** @param {NS} ns **/
 export async function main(ns) {
-	const filename = ns.args[0]
-	const server = ns.args[1]
-	const data = ns.codingcontract.getData(filename, server)
-	const solution = stockTrade4(data[0], data[1])
-	ns.tprint("Solution: " + solution)
-	const result = ns.codingcontract.attempt(solution, filename, server)
-	ns.tprint("Result: " + result)
-	ns.writePort(1, "" + result)
+	solve(ns, stockTrade4)
 }
 
-function stockTrade4(k, data) {
-	const [mins, maxs] = findallminmax(data)
+function stockTrade4(data) {
+	const [k, d] = data
+	const [mins, maxs] = findallminmax(d)
 	while (mins.length > k) {
 		const [iMin, iMax] = findLowestRemovableTrade(mins, maxs)
 		mins.splice(iMin, 1)

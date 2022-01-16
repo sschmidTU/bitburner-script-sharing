@@ -1,12 +1,12 @@
+import { solve } from "/cct"
+
 /** @param {NS} ns **/
 export async function main(ns) {
-	const filename = ns.args[0]
-	const server = ns.args[1]
-	const data = ns.codingcontract.getData(filename, server)
-	const solution = uniqueBlockedPaths(data)
-	const result = ns.codingcontract.attempt(solution, filename, server)
-	ns.tprint("Result: " + result)
-	ns.writePort(1, "" + result)
+	solve(ns, uniquePaths2)
+}
+
+function uniquePaths2(data) {
+	return uniqueBlockedPaths(data)
 }
 
 function uniqueBlockedPaths(data, cache = {}, start = [0, 0]) {

@@ -1,13 +1,8 @@
+import { solve } from "/cct"
+
 /** @param {NS} ns **/
 export async function main(ns) {
-	const filename = ns.args[0]
-	const server = ns.args[1]
-	const data = ns.codingcontract.getData(filename, server)
-	const solution = stockTrade3(data)
-	ns.tprint("Solution: " + solution)
-	const result = ns.codingcontract.attempt(solution, filename, server)
-	ns.tprint("Result: " + result)
-	ns.writePort(1, "" + result)
+	solve(ns, stockTrade3)
 }
 
 function stockTrade3(data) {

@@ -1,13 +1,12 @@
+import { solve } from "/cct"
+
 /** @param {NS} ns **/
 export async function main(ns) {
-	const filename = ns.args[0]
-	const server = ns.args[1]
-	const data = ns.codingcontract.getData(filename, server)
-	const solution = generateIP(data, 4)
-	ns.tprint("Solution: " + solution.map(r => '"' + r + '"'))
-	const result = ns.codingcontract.attempt(solution, filename, server)
-	ns.tprint("Result: " + result)
-	ns.writePort(1, "" + result)
+	solve(ns, generateIPAdresses)
+}
+
+function generateIPAdresses(data) {
+	return generateIP(data, 4)
 }
 
 function generateIP(numbers, nBlocks) {
