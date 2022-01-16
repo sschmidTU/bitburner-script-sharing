@@ -1,4 +1,4 @@
-import { performAction } from "taskValue.js"
+import { performAction } from "./taskValue"
 import { getCrackNames, exists, connect, writeOptions, getOptions, getTasks, getInstitutions, getGoals, getServerList } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
@@ -16,7 +16,7 @@ function keepFocus(ns) {
 	return ns.args[0]
 }
 
-export function performTask(ns, options) {
+export function performTask(ns, options=getOptions(ns)) {
 	if (keepFocus(ns)) return false
 
 	const tasks = getTasks(ns)

@@ -1,6 +1,5 @@
-import { performTask } from "singularity.js"
+import { performTask } from "./singularity"
 /** @param {NS} ns **/
 export async function main(ns) {
-    const options = JSON.parse(ns.read("options.script"))
-    performTask(ns, options)
+    performTask(ns)
 }

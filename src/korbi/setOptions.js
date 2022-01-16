@@ -21,7 +21,7 @@ export async function main(ns) {
 	scripts["joinFaction"] = 30
 	scripts.crime = false
 	scripts["createProgram"] = false
-	scripts.estimateHackXp = 500
+	scripts.estimateHackXp = 1000
 	scripts.taskValue = 50
 	scripts.singularity = 20
 	scripts.upgradeHome = 50

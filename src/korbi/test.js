@@ -1,13 +1,13 @@
-import { getServerList } from "utilities.js"
+import { getServerList, isHackable, isRootable } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
     ns.tail()
 	//ns.print(ns.ls("home"))
 	//ns.print(ns.getPurchasedServerCost(256))
 	//ns.print(ns.fileExists("codingContracts/SpiralizeMatrix.js"))
-	//ns.print(ns.getCrimeStats("homicide").money)
+	ns.print(ns.getCrimeStats("ultimate heist").money / 1e6)
 	//ns.print(ns["hack"]("n00dles"))
-	ns.print(ns.read("tasks.txt"))
+	//ns.print(ns.read("tasks.txt"))
 	//ns.print(ns.read("options.script"))
 	//await printHost(ns, "required_stats.script")
     //ns.print(ns.args[0])
@@ -30,7 +30,7 @@ export async function main(ns) {
 	//ns.run("watchServer.js", 1, "n00dles")
 	//ns.run("watchServer.js", 1, "foodnstuff")
 	//ns.run("watchServer.js", 1, "harakiri-sushi")
-	//getServerList(ns)
+	//ns.print(getServerList(ns).filter(s => isRootable(ns, s)))
 	
 }
 
