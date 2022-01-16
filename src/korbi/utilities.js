@@ -1,36 +1,26 @@
 /** @param {NS} ns **/
-export function getServerList(ns, excludeServers = ["home"]) {
-	var l = ns.scan('home')
+
+export function getServerList(ns, excludeServers=["home"]) {
+	var list = ns.scan("home")
 	var final = []
 	let cnt = 0
-	while (!l.length == 0 && cnt++ < 1000) {
-		var item = l.pop()
-		if (ns.hasRootAccess(item)) {
+	while (!list.length == 0 && cnt++ < 1000) {
+		var item = list.pop()
+		if (ns.hasRootAccess(item))
 			final.push(item)
-		} else {
-			if (isRootable(ns, item)) {
-				ns.print("Rooting: " + item)
-				ns.run("root.js", 1, item)
-			}
-		}
-		const s2 = ns.scan(item)
-		for (const s of s2) {
-			if (!excludeServers.includes(s) && !final.includes(s) && !l.includes(s) && ns.hasRootAccess(item)) {
-				l.push(s)
-			}
+		else if (isRootable(ns, item))
+			ns.run("root.js", 1, item)
+
+		for (const s of ns.scan(item)) {
+			if (!final.includes(s) && !list.includes(s))
+				list.push(s)
 		}
 	}
 	return final.filter(s => !excludeServers.includes(s))
 }
 
 export function getNumberOfRunningScripts(ns, server, script) {
-	let num = 0
-	for (const running of ns.ps(server)) {
-		if (running.filename == script) {
-			num++
-		}
-	}
-	return num
+	return ns.ps(server).filter(p => p.filename == script).length
 }
 
 export function sum(array) {
@@ -55,13 +45,7 @@ export function getCrackNames() {
 }
 
 export function getNumCracks(ns) {
-	let num = 0
-	for (const name of getCrackNames()) {
-		if (exists(ns, name)) {
-			num += 1
-		}
-	}
-	return num
+	return getCrackNames().filter(n => exists(ns, n)).length
 }
 
 export function isRootable(ns, server) {
@@ -82,14 +66,10 @@ export function exists(ns, file) {
 
 export function getConnectionPath(ns, target, start="home", backConnect="") {
 	for (const s of ns.scan(start)) {
-		if (s === target) {
-			return [s]
-		}
+		if (s === target) return [s]		
 		if (s !== backConnect) {
 			const pth = getConnectionPath(ns, target, s, start)
-			if (pth) {
-				return [s, ...pth]
-			}
+			if (pth) return [s, ...pth]
 		}
 	}
 }
@@ -107,6 +87,28 @@ export async function execute(ns, script, host, ...args) {
 	}
 }
 
+export async function writeFile(ns, file, content) {
+	await ns.write(file, JSON.stringify(content, null, 2), "w")
+}
+
 export async function writeOptions(ns, options) {
-	await ns.write("options.script", JSON.stringify(options, null, 2), "w")
+	await writeFile(ns, "options.script", options)
+}
+
+export function getFile(ns, file) {
+	return JSON.parse(ns.read(file))
+} 
+
+export function getOptions(ns) {
+	return getFile(ns, "options.script")
+}
+
+export function getTasks(ns) {
+	const obj = getFile(ns, "tasks.txt")
+	if (!obj) return []
+	return obj.tasks
+}
+
+export function getInstitutions(ns) {
+	return getFile(ns, "institutions.script")
 }

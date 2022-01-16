@@ -8,6 +8,7 @@ export async function main(ns) {
 	//ns.print(ns.getCrimeStats("homicide").money)
 	//ns.print(ns["hack"]("n00dles"))
 	ns.print(ns.read("tasks.txt"))
+	//ns.print(ns.read("options.script"))
 	//await printHost(ns, "required_stats.script")
     //ns.print(ns.args[0])
     //ns.print(ns.args[1])

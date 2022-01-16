@@ -1,47 +1,41 @@
-import { getCrackNames, exists, connect, writeOptions } from "utilities.js"
+import { getCrackNames, exists, connect, writeOptions, getOptions, getTasks, getInstitutions } from "utilities.js"
 import { performAction } from "taskValue.js"
 /** @param {NS} ns **/
 export async function main(ns) {
-	ns.tail()
-	const isMeasuring = ns.scriptRunning("measureFactionRepGain.js", "home")
-	const isCriming = ns.getPlayer().crimeType !== ""
-	//if (isMeasuring || isCriming) return
+	//ns.tail()
 	ns.disableLog("ALL")
-	const optionsFile = "options.script"
 	const TODO = [installBackdoor, augment, installAugmentations, createProgram, donate, checkEndgameFaction, performTask]
-	const options = JSON.parse(ns.read(optionsFile))
-	for (const task of TODO) {
-		ns.print(task.name)
-		const res = await task(ns, options)
-		if (res) {
-			break
-		}
+	const options = getOptions(ns)
+	for (const todo of TODO) {
+		const isBlocking = await todo(ns, options)
+		if (isBlocking) break
 	}
 }
 
-export function performTask(ns, options) {
-	if (ns.args[0])
-		return false
+function keepFocus(ns) {
+	return ns.args[0]
+}
 
-	const obj = JSON.parse(ns.read("tasks.txt"))
-	if (!obj) return false
-	const tasks = obj.tasks
+export function performTask(ns, options) {
+	if (keepFocus(ns)) return false
+
+	const tasks = getTasks(ns)
 	if (tasks.length == 0) return false
 
-	const bestTask = getBestTask(ns, tasks)
-	ns.print("Task: " + bestTask.task + " sub: " + bestTask.subType + " val: " + bestTask.value)
+	const bestTask = getBestTask(tasks)
+	ns.print("Task: " + bestTask.type + " sub: " + bestTask.subType + " val: " + bestTask.value)
+
 	if (bestTask.type == "crime")
 		return commitCrime(ns, bestTask.subType)
 
-	const institutions = JSON.parse(ns.read("institutions.script"))
+	const institutions = getInstitutions(ns)
 	return performAction(ns, options, institutions, bestTask)
 }
 
-function getBestTask(ns, tasks) {
+function getBestTask(tasks) {
 	let maxVal = 0
 	let bestTask = {}
 	for (const task of tasks) {
-		ns.print("Task: " + task.task + " sub: " + task.subType + " val: " + task.value)
 		if (task.value > maxVal) {
 			maxVal = task.value
 			bestTask = task
@@ -163,7 +157,6 @@ async function checkSetEnoughRep(ns, options, allAugs) {
 	let money_weight = 1
 	ns.print("Number of Augs with enough Rep: " + getNDifferentAugs(enoughRepAugs))
 	if (enoughAugsForReset(ns, options, enoughRepAugs, allAugs)) {
-		ns.tprint("need money")
 		money_weight = options.needMoneyFactor
 	}
 	if (options.money_weight != money_weight) {

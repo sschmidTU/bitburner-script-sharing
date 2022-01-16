@@ -1,6 +1,7 @@
 /** @param {NS} ns **/
 export async function main(ns) {
 	ns.disableLog("sleep")
+	ns.tail()
 	await cron(ns)
 }
 
@@ -11,7 +12,6 @@ async function cron(ns) {
 	}
 	let time = 0
 	while (true) {
-		ns.tail()
 		const options = JSON.parse(ns.read("options.script"))
 		for (const script in table) {
 			if (time > table[script]) {
