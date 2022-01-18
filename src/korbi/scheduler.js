@@ -1,4 +1,4 @@
-import { sum, getServerList, updateOptions } from "utilities.js"
+import { sum, getServerList, updateOptions, getServerThreads } from "./utilities";
 
 /** @param {NS} ns **/
 export async function main(ns) {
@@ -8,7 +8,7 @@ export async function main(ns) {
 	let targetTimes = {}
 	while (true) {
 		const options = JSON.parse(ns.read("options.script"))
-		const targets = getMoneyTarget(ns, options)
+		const targets = getMoneyTarget(ns, options).filter(s => ns.getWeakenTime(s) < options.maximumWeakenTime)
 		for (const t of targets) {
 			if (!(t in targetTimes)) {
 				targetTimes[t] = 0
@@ -121,7 +121,7 @@ function weakenGrowIfNecessary(ns, options, threadsCount, target) {
 }
 
 function deploy(ns, options, threadsCount, target, freeSlots) {
-	ns.print("Deploying: " + target + " with " + threadsCount)
+	ns.print("Deploying: " + target + " with " + threadsCount + " time: " + (ns.getWeakenTime(target) / 1000).toFixed(1) + "s")
 	let lastSlot = 0
 	let lastUsed = 0
 	for (let type = 0; type < threadsCount.length; type++) {
@@ -164,18 +164,6 @@ export function getThreadsRatio(ns, options, server) {
 	nWeaken = Math.min(nWeaken + nAdditionalWeaken, 2 * nWeaken)
 
 	return [nHack, nWeaken, nGrowth]
-}
-
-function getServerThreads(ns, options, server) {
-	let threads = Math.floor((ns.getServerMaxRam(server) - ns.getServerUsedRam(server)) / options.ramPerThread)
-	if (server === options.host) {
-		threads = Math.floor((ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - options.keepRam) / options.ramPerThread)
-	} else if (server === "home") {
-		threads = Math.floor((ns.getServerMaxRam(server) - ns.getServerUsedRam(server) - options.keepRamHome) / options.ramPerThread)
-		//ns.tprint("Keeping " + options.keepRamHome + "RAM on " + server + " (" + threads + ")")
-		//ns.tprint("Max ram: " + ns.getServerMaxRam("home") + " used: " + ns.getServerUsedRam("home"))
-	}
-	return threads
 }
 
 // search for the largest value that where f is not true

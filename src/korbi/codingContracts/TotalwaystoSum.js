@@ -2,7 +2,7 @@ import { solve } from "/cct"
 
 /** @param {NS} ns **/
 export async function main(ns) {
-	solve(ns, waysToSum)
+	solve(ns, waysToSum, true)
 }
 
 function waysToSum(data) {

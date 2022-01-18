@@ -1,4 +1,5 @@
 import { workout } from "gym.js"
+import { getAllAugmentationsFromOwnFactions, enoughRep } from "/utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
 	ns.disableLog("ALL")
@@ -77,7 +78,7 @@ function isOwnFaction(ns, corp) {
 }
 
 async function taskValue(ns, options, institutions, statsGoal, task) {
-	const workoutFile = "workout_gain_" + task.subtype + ".txt"
+	const workoutFile = "workout_gain_" + task.subType + ".txt"
 	if (task.type == "crime") return crimeBenefit(ns, options, statsGoal, task.subType)
 	if (task.type == "work" && isOwnFaction(ns, task.at)) return 0
 
@@ -131,12 +132,16 @@ function reputationBenefit(ns, options, repGain, task) {
 }
 
 function getFastestAugmentationTime(ns, faction, repGain) {
+	const enoughRepAugs = getAllAugmentationsFromOwnFactions(ns).filter(a => enoughRep(ns, a[0], a[1])).map(a => a[0])
+	const notPurchasable = aug => !enoughRepAugs.includes(aug)
 	const factionRep = ns.getFactionRep(faction)
 	const missingRepTime = aug => (ns.getAugmentationRepReq(aug) - factionRep) / repGain
-	const sortByRep = (a, b) => missingRepTime(a) - missingRepTime(b)
-	const filterNotEnoughRep = aug => ns.getAugmentationRepReq(aug) > factionRep
-	const filterOwnedAugmentations = aug => !ns.getOwnedAugmentations(true).includes(aug)
-	const augmentations = ns.getAugmentationsFromFaction(faction).filter(filterOwnedAugmentations).filter(filterNotEnoughRep).filter(notNeuroFlux).sort(sortByRep)
+	const isLessRep = (a, b) => missingRepTime(a) - missingRepTime(b)
+	const notEnoughRep = aug => ns.getAugmentationRepReq(aug) > factionRep
+	const isOwnedAugmentations = aug => !ns.getOwnedAugmentations(true).includes(aug)
+	ns.print("here")
+	const augmentations = ns.getAugmentationsFromFaction(faction).filter(isOwnedAugmentations).filter(notEnoughRep).filter(notPurchasable).sort(isLessRep)
+	ns.print(augmentations)
 	if (augmentations.length > 0) {
 		return missingRepTime(augmentations[0])
 	}
@@ -180,7 +185,7 @@ export function performAction(ns, options, institutions, task) {
 	if (task.type == "work") {
 		const city = institutions.corporations[task.at][1]
 		if (ns.getPlayer().city != city) {
-			if (ns.getPlayer().money > 1e6) {
+			if (ns.getPlayer().money > 50e6) {
 				ns.travelToCity(city)
 			} else {
 				return false
@@ -208,7 +213,7 @@ export function crimeBenefit(ns, options, requiredStats, crime) {
 	crimeSum += options.kill_weight * crimeStats.kills * requiredStats.kills / (ns.getPlayer().numPeopleKilled + 1)
 	//ns.tail()
 	//ns.print("before money: " + crimeSum)
-	crimeSum += options.money_weight * requiredStats.money * Math.pow(ns.getCrimeChance(crime), 1.2) * crimeStats.money / ns.getPlayer().money
+	crimeSum += options.money_weight * requiredStats.money * Math.pow(ns.getCrimeChance(crime), 1.5) * crimeStats.money / ns.getPlayer().money
 	//ns.print("after money: " + crimeSum)
 	crimeSum /= (crimeStats.time / 1e3)
 	return crimeSum * options.crime_factor

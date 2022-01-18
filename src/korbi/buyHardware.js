@@ -1,10 +1,6 @@
 import { getServerList } from "utilities.js"
 /** @param {NS} ns **/
 export async function main(ns) {
-    if (!isRequired(ns)) {
-        ns.print("No new server needed!")
-        return
-    }
     ns.disableLog("getServerMaxRam")
     const options = JSON.parse(ns.read("options.script"))
     let [lastBoughtRam, nLastBought] = getLargestPurchasedServerRam(ns)
@@ -88,6 +84,5 @@ function isRequired(ns) {
         totalRam += ns.getServerMaxRam(server)
         usedRam += ns.getServerUsedRam(server)
     }
-    ns.tprint(usedRam + " of " + totalRam)
     return usedRam > totalRam / 2
 }

@@ -1,5 +1,5 @@
 import { performAction } from "./taskValue"
-import { getCrackNames, exists, connect, writeOptions, getOptions, getTasks, getInstitutions, getGoals, getServerList } from "./utilities"
+import { getCrackNames, exists, connect, writeOptions, getOptions, getTasks, getInstitutions, getGoals, getServerList, getAllAugmentationsFromOwnFactions, enoughRep } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
 	//ns.tail()
@@ -179,25 +179,8 @@ function enoughMoney(ns, augmentation) {
 	return ns.getAugmentationPrice(augmentation) < ns.getPlayer().money
 }
 
-function enoughRep(ns, augmentation, faction) {
-	return ns.getAugmentationRepReq(augmentation) < ns.getFactionRep(faction)
-}
-
-function getAllAugmentationsFromOwnFactions(ns) {
-	const ownedAugmentations = ns.getOwnedAugmentations(true)
-	let augmentations = []
-	for (const f of ns.getPlayer().factions) {
-		for (const aug of ns.getAugmentationsFromFaction(f)) {
-			if (aug == "NeuroFlux Governor" || !ownedAugmentations.includes(aug)) {
-				augmentations.push([aug, f])
-			}
-		}
-	}
-	return augmentations
-}
-
 async function installAugmentations(ns, options) {
-	if (ns.args[0]) return
+	if (keepFocus(ns)) return
 	if (getNQueuedAugs(ns) >= options.resetAfterAugmentations) {
 		while (await augment(ns, options)) { }
 		await nextFactionGroup(ns)
@@ -221,7 +204,7 @@ async function nextFactionGroup(ns) {
 async function checkEndgameFaction(ns, options) {
 	ns.print("Checking endgame faction")
 	for (const faction of ns.getPlayer().factions) {
-		if (["ECorp", "NWO", "Fulcrum Secret Technologies", "BitRunners", "Daedalus", "The Covenant", "Illuminati"].includes(faction)) {
+		if (["ECorp", "NWO", "Fulcrum Secret Technologies", "BitRunners", "Daedalus", "The Covenant", "Illuminati", "Speakers for the Dead"].includes(faction)) {
 			const favor = ns.getFactionFavor(faction)
 			const gain = ns.getFactionFavorGain(faction)
 			const condition1 = favor < options.endGameFavorReset[0] - 30 && favor + gain >= options.endGameFavorReset[0]

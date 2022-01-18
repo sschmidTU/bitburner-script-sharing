@@ -6,6 +6,7 @@ export async function main(ns) {
 }
 
 function findAllValid(data, ns) {
+	return true
 	return findExpressions(data[1], data[0])
 }
 

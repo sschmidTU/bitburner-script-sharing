@@ -21,6 +21,15 @@ export function getNumberOfRunningScripts(ns, server, script) {
 	return ns.ps(server).filter(p => p.filename == script).length
 }
 
+export function getServerThreads(ns, options, server) {
+	let ram = ns.getServerMaxRam(server) - ns.getServerUsedRam(server)
+	if (server === options.host)
+		ram -= options.keepRam
+	if (server === "home")
+		ram -= options.keepRamHome
+	return Math.floor(ram / options.ramPerThread)
+}
+
 export function sum(array) {
 	let s = 0
 	for (const item of array) {
@@ -43,7 +52,7 @@ export function getCrackNames() {
 }
 
 export function getNumCracks(ns) {
-	return getCrackNames().filter(n => exists(ns, n)).length
+	return getCrackNames().filter(c => ns.fileExists(c)).length
 }
 
 export function isRootable(ns, server) {
@@ -119,6 +128,14 @@ export function getGoals(ns) {
 	return getFile(ns, "required_stats.txt")
 }
 
+export function getServerMoneyFactor(ns) {
+	return getFile(ns, "servers_money_factor.txt")
+}
+
+export async function writeServerMoney(ns, money) {
+	await writeFile(ns, "servers_money_factor.txt", money)
+}
+
 export async function writeServerXp(ns, xp) {
 	await writeFile(ns, "servers_hack_xp.txt", xp)
 }
@@ -129,4 +146,21 @@ export async function updateOptions(ns, option, value) {
 		options[option] = value
 		await writeOptions(ns, options)
 	}
+}
+
+export function enoughRep(ns, augmentation, faction) {
+	return ns.getAugmentationRepReq(augmentation) < ns.getFactionRep(faction)
+}
+
+export function getAllAugmentationsFromOwnFactions(ns) {
+	const ownedAugmentations = ns.getOwnedAugmentations(true)
+	let augmentations = []
+	for (const f of ns.getPlayer().factions) {
+		for (const aug of ns.getAugmentationsFromFaction(f)) {
+			if (aug == "NeuroFlux Governor" || !ownedAugmentations.includes(aug)) {
+				augmentations.push([aug, f])
+			}
+		}
+	}
+	return augmentations
 }

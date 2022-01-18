@@ -1,3 +1,5 @@
+import { getOptions, getServerThreads } from "./utilities"
+
 /** @param {NS} ns **/
 export async function main(ns) {
     await fullWeaken(ns, ns.args[0])
@@ -6,12 +8,13 @@ export async function main(ns) {
 export async function fullWeaken(ns, server) {
 	const weakenAmount = 0.05
 	const host = "home"
-	const script = "weaken.ns"
-	const options = JSON.parse(ns.read("options.script"))
+	const script = "weaken.js"
+	const options = getOptions(ns)
 	while (ns.getServerSecurityLevel(server) > ns.getServerMinSecurityLevel(server) * 1.01) {
 		const security = ns.getServerSecurityLevel(server) - ns.getServerMinSecurityLevel(server)
 		const nThreadsRequired = security / weakenAmount / ns.getServer(host).cpuCores
-		const nThreadsMax = Math.floor((ns.getServerMaxRam(host) - ns.getServerUsedRam(host) - options.keepRamHome) / ns.getScriptRam(script))
+		const nThreadsMax = getServerThreads(ns, options, host)
+		ns.print(nThreadsMax)
 		const nThreads = Math.min(nThreadsMax, nThreadsRequired)
 		if (nThreads > 0) {
 			ns.run(script, nThreads, server)

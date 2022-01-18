@@ -5,7 +5,7 @@ export async function main(ns) {
 	let opts = {}
 	let scripts = {}
 	// default
-	opts.homeScripts = ["runScript.js", "estimateHackXp.js", "setOptions.js", "setScheduleTime.js", "cct.js"]
+	opts.homeScripts = ["runScript.js", "estimateHackXp.js", "setOptions.js", "setScheduleTime.js", "cct.js", "scan.js"]
 	opts.keepRamHome = 15
 	opts.onlyGrowThreshold = 0.1
 	opts.levelUpHack = true
@@ -18,11 +18,12 @@ export async function main(ns) {
 	opts.maxServersPerSize = 3
 	opts.minScheduleThreads = 10
 	opts.minHackXpThreads = 10
+	opts.maximumWeakenTime = 3600e3
 	scripts["joinFaction"] = 30
 	scripts.crime = false
 	scripts["createProgram"] = false
 	scripts.estimateHackXp = 1000
-	scripts.taskValue = 50
+	scripts.taskValue = 47
 	scripts.singularity = 20
 	scripts.upgradeHome = 50
 	scripts.performTask = false
@@ -88,7 +89,7 @@ async function setOptions(ns, opts, scripts, availableRam) {
 		}
 	}
 	await ns.write("cron.txt", JSON.stringify(cron, null, 2), "w")
-	options.keepRam = maxRamRequired * 1.1
+	options.keepRam = maxRamRequired * 1.1 + 12
 	for (const opt in opts) {
 		options[opt] = opts[opt]
 	}

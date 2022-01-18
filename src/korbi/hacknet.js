@@ -5,7 +5,7 @@ export async function main(ns) {
 	const options = JSON.parse(ns.read("options.script"))
 	const maxPrice = Math.min(options.maxHacknetCost * ns.getPlayer().money, ns.getServerMoneyAvailable("home") - options.keepMoney)
 	const [doUpgrade, node, cost] = await getMostEffectiveItem(ns)// getCheapestItem(h)
-	if (cost < maxPrice)
+	if (cost * options.money_weight < maxPrice)
 		doUpgrade(node, 1)
 }
 

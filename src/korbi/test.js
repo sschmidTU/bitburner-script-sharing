@@ -1,13 +1,15 @@
-import { getServerList, isHackable, isRootable } from "./utilities"
+import { getAllAugmentationsFromOwnFactions, enoughRep } from "./singularity"
+import { exists, getCrackNames, getNumCracks, getServerList, isHackable, isRootable } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
     ns.tail()
+	ns.disableLog("ALL")
 	//ns.print(ns.ls("home"))
 	//ns.print(ns.getPurchasedServerCost(256))
 	//ns.print(ns.fileExists("codingContracts/SpiralizeMatrix.js"))
-	ns.print(ns.getCrimeStats("ultimate heist").money / 1e6)
+	//ns.print(ns.getCrimeStats("homicide").money / 1e3)
 	//ns.print(ns["hack"]("n00dles"))
-	//ns.print(ns.read("tasks.txt"))
+    //ns.print(ns.read("tasks.txt"))
 	//ns.print(ns.read("options.script"))
 	//await printHost(ns, "required_stats.script")
     //ns.print(ns.args[0])
@@ -29,9 +31,10 @@ export async function main(ns) {
 	//ns.print(ns.read("servers_hack_factor.txt"))
 	//ns.run("watchServer.js", 1, "n00dles")
 	//ns.run("watchServer.js", 1, "foodnstuff")
-	//ns.run("watchServer.js", 1, "harakiri-sushi")
+	//ns.run("watchServer.js", 1, "phantasy")
+	//ns.print(ns.getWeakenTime("iron-gym"))
 	//ns.print(getServerList(ns).filter(s => isRootable(ns, s)))
-	
+	ns.print(getAllAugmentationsFromOwnFactions(ns).filter(a => enoughRep(ns, a[0], a[1])))
 }
 
 async function printHost(ns, script) {
