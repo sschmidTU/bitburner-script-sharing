@@ -1,13 +1,12 @@
-import { getServerList, isHackable, getServerXp, writeServerXp } from "utilities.js"
+import { getPossibleTargets, getServerXp, writeServerXp } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
 	ns.disableLog("ALL")
 	const times = [ns.getHackTime, ns.getWeakenTime, ns.getGrowTime]
 	const scripts = ["hackLoop.ns", "weakenLoop.ns", "growLoop.ns"]
-	const servers = getServerList(ns).filter(s => !ns.getPurchasedServers().includes(s))
+	const servers = getPossibleTargets(ns)
 	for (const server of servers) {
-		if (isHackable(ns, server))
-			await updateXpTable(ns, server, times, scripts)
+		await updateXpTable(ns, server, times, scripts)
 	}
 }
 

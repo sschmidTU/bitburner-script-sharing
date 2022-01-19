@@ -1,3 +1,5 @@
+import { getGoals, getInstitutions } from "./utilities"
+
 /** @param {NS} ns **/
 export async function main(ns) {
 	gymWorkout(ns)
@@ -8,7 +10,7 @@ export function gymWorkout(ns) {
 	if (ns.getPlayer().money < 10e6) return false
 
 	const statsRate = s => `work${s[0].toUpperCase()}${s[1]}${s[2]}ExpGainRate`
-	const institutions = JSON.parse(ns.read("institutions.script"))
+	const institutions = getInstitutions(ns)
 	const gyms = institutions.gyms
 	const unis = institutions.unis
 
@@ -34,7 +36,6 @@ export function gymWorkout(ns) {
 }
 
 export function workout(ns, stat) {
-	if (ns.getPlayer().money < 10e6) return false
 	const bestGym = "powerhouse gym"
 	const bestUni = "ZB Institute of Technology"
 
@@ -54,8 +55,9 @@ export function workout(ns, stat) {
 }
 
 export function getMinStat(ns) {
+	ns.print("h5")
 	const stats = ["strength", "defense", "dexterity", "agility", "charisma"]
-	const requiredLevels = JSON.parse(ns.read("required_stats.script"))
+	const requiredLevels = getGoals(ns)
 	let minStat = ""
 	let minLevel = 1
 	for (const stat of stats) {
@@ -65,5 +67,6 @@ export function getMinStat(ns) {
 			minStat = stat
 		}
 	}
+	ns.print("h6")
 	return minStat
 }

@@ -1,4 +1,4 @@
-import { sum, getServerList, updateOptions, getServerThreads } from "./utilities";
+import { sum, updateOptions, getServerThreads, getOptions, getAllServers } from "./utilities";
 
 /** @param {NS} ns **/
 export async function main(ns) {
@@ -7,16 +7,16 @@ export async function main(ns) {
 	let time = 0
 	let targetTimes = {}
 	while (true) {
-		const options = JSON.parse(ns.read("options.script"))
+		const options = getOptions(ns)
 		const targets = getMoneyTarget(ns, options).filter(s => ns.getWeakenTime(s) < options.maximumWeakenTime)
 		for (const t of targets) {
 			if (!(t in targetTimes)) {
 				targetTimes[t] = 0
 			}
 		}
-		let servers = getServerList(ns, []).filter(f => ns.hasRootAccess(f))
+		let servers = getAllServers(ns)	
 		await prepareServers(ns, options, servers)
-		await updateLoopTime(ns, servers)
+		await updateLoopTime(ns, targets)
 
 		targetTimes = schedule(ns, options, servers, targets, targetTimes, time)
 

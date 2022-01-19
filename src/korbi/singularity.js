@@ -1,5 +1,5 @@
 import { performAction } from "./taskValue"
-import { getCrackNames, exists, connect, writeOptions, getOptions, getTasks, getInstitutions, getGoals, getServerList, getAllAugmentationsFromOwnFactions, enoughRep } from "./utilities"
+import { keepFocus, getCrackNames, exists, connect, writeOptions, getOptions, getTasks, getInstitutions, getGoals, getAllAugmentationsFromOwnFactions, enoughRep, getPossibleTargets } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
 	//ns.tail()
@@ -12,10 +12,6 @@ export async function main(ns) {
 	}
 }
 
-function keepFocus(ns) {
-	return ns.args[0]
-}
-
 export function performTask(ns, options=getOptions(ns)) {
 	if (keepFocus(ns)) return false
 
@@ -23,7 +19,7 @@ export function performTask(ns, options=getOptions(ns)) {
 	if (tasks.length == 0) return false
 
 	const bestTask = getBestTask(tasks)
-	ns.print("Task: " + bestTask.type + " sub: " + bestTask.subType + " val: " + bestTask.value)
+	ns.tprint("Task: " + bestTask.type + " sub: " + bestTask.subType + " val: " + bestTask.value)
 
 	if (bestTask.type == "crime")
 		return commitCrime(ns, bestTask.subType)
@@ -110,9 +106,7 @@ function checkBuyTor(ns) {
 async function installBackdoor(ns) {
 	const file = "backdoors.txt"
 	const backdoored = ns.read(file)
-	const excludedServers = ns.getPurchasedServers()
-	excludedServers.push("w0r1d_d43m0n")
-	const servers = getServerList(ns, excludedServers)//["powerhouse-fitness", "CSEC", "avmnite-02h", "I.I.I.I", "run4theh111z", "fulcrumassets"]//, "w0r1d_d43m0n"]
+	const servers = getPossibleTargets(ns)
 	for (const server of servers) {
 		const canHack = ns.getServerRequiredHackingLevel(server) <= ns.getHackingLevel() && ns.hasRootAccess(server)
 		const isBackdoored = backdoored.includes(server)
@@ -131,8 +125,7 @@ async function installBackdoor(ns) {
 async function augment(ns, options) {
 	const allAugs = getAllAugmentationsFromOwnFactions(ns).filter(a => isHackingAug(ns, a[0]))
 	await checkSetEnoughRep(ns, options, allAugs)
-	const obtainableAugs = allAugs.filter(a => isObtainable(ns, a[0], a[1]))
-
+	const obtainableAugs = allAugs.filter(a => isObtainable(ns, a[0], a[1])).filter(a => checkForLowerGen(ns, a[0]))
 	if (obtainableAugs.length > 0 && (enoughAugsForReset(ns, options, obtainableAugs, allAugs))) {
 		const sortFunction = (a, b) => ns.getAugmentationPrice(a[0]) - ns.getAugmentationPrice(b[0])
 		const sorted = obtainableAugs.filter(notNeuroFlux).sort(sortFunction)
@@ -142,9 +135,20 @@ async function augment(ns, options) {
 			var [aug, f] = obtainableAugs[0]
 		}
 		ns.purchaseAugmentation(f, aug)
-		ns.tprint("Purchased " + aug + " from " + obtainableAugs)
+		ns.tprint("Purchased " + aug + " from " + f + " for " + ns.getAugmentationPrice(aug) / 1e6 + "M")
 		return true
 	}
+}
+
+function checkForLowerGen(ns, aug) {
+	if (!aug.includes(" - Gen ")) return true
+	const parts = aug.split(" ")
+	const gen = parts.pop()
+	if (gen == "I") return true
+	const oneLower = {"II": "I", "III": "II", "IV": "III", "V": "IV"}
+	const lowerGen = oneLower[gen]
+	const lowerAug = [...parts, lowerGen].join(" ")
+	return ns.getOwnedAugmentations(true).includes(lowerAug)
 }
 
 function enoughAugsForReset(ns, options, obtainableAugs, allAugs) {

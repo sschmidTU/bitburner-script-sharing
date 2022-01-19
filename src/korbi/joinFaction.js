@@ -1,13 +1,14 @@
-import { getMinStat } from "gym.js"
+import { getMinStat } from "./gym"
+import { getFile, getInstitutions, getOptions } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
     await joinFaction(ns)
 }
 
 async function joinFaction(ns) {
-    const options = JSON.parse(ns.read("options.script"))
-    const factionGroups = JSON.parse(ns.read("faction-groups.script"))
-    const syndicates = JSON.parse(ns.read("institutions.script")).syndicates
+    const options = getOptions(ns)
+    const factionGroups = getFile(ns, "faction-groups.script")
+    const syndicates = getInstitutions(ns).syndicates
     const g = options.factionGroup
     const excluded = factionGroups[String(g % 3 + 1)].concat(factionGroups[String((g + 1) % 3 + 1)])
     const player = ns.getPlayer()

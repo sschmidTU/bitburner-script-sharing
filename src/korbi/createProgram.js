@@ -1,7 +1,7 @@
-import { createProgram } from "singularity.js"
+import { createProgram } from "./singularity"
+import { getOptions, isCriming, keepFocus } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
-	if (ns.args[0] || ns.getPlayer().crimeType !== "") return
-	const options = JSON.parse(ns.read("options.script"))
-	createProgram(ns, options)
+	if (keepFocus(ns) || isCriming(ns)) return
+	createProgram(ns, getOptions(ns))
 }

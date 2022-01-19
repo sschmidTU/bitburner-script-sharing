@@ -1,5 +1,5 @@
 import { getThreadsRatio } from "./scheduler"
-import { getOptions, getServerList, getNumberOfRunningScripts, writeServerMoney } from "./utilities"
+import { getOptions, getNumberOfRunningScripts, writeServerMoney, getPossibleTargets, needsWeakening } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
 	ns.disableLog("ALL")
@@ -8,17 +8,16 @@ export async function main(ns) {
 
 async function serverLoop(ns) {
 	const options = getOptions(ns)
-	const servers = getServerList(ns).filter(s => !ns.getPurchasedServers().includes(s)).filter(ns.hasRootAccess)
 	
 	let serversFile = {}
-	for (const server of servers) {
-		if (ns.getServerMaxMoney(server) > 0) {
-			const value = getServerValue(ns, options, server)
-			ns.print("getServerValue(" + server + "): " + value.toFixed(3))
-			serversFile[server] = value
-			ns.print(ns.getServerSecurityLevel(server) + " of " + ns.getServerMinSecurityLevel(server) + " factor " + options.securityThreshold)
-			weakenIfNecessary(ns, options, server)
-		}
+	for (const server of getPossibleTargets(ns)) {
+		const value = getServerValue(ns, options, server)
+		serversFile[server] = value
+		weakenIfNecessary(ns, options, server)
+
+		ns.print("getServerValue(" + server + "): " + value.toFixed(3))
+		ns.print(ns.getServerSecurityLevel(server) + " of " + ns.getServerMinSecurityLevel(server) + " factor " + options.securityThreshold)
+		
 		await ns.sleep(200)
 	}
 	await writeServerMoney(ns, serversFile)
@@ -36,9 +35,8 @@ function getServerValue(ns, options, s) {
 }
 
 function weakenIfNecessary(ns, options, server) {
-	const needsWeakening = ns.getServerSecurityLevel(server) > ns.getServerMinSecurityLevel(server) * options.securityThreshold
 	const canRunOnHome = getNumberOfRunningScripts(ns, "home", "fullWeaken.js") < options.maxWeakenTargets
-	if (needsWeakening && canRunOnHome) {
+	if (canRunOnHome && needsWeakening(ns, options, server)) {
 		ns.print("Weakaning target " + server)
 		ns.exec("fullWeaken.js", "home", 1, server)
 	}

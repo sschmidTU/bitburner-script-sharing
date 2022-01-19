@@ -1,30 +1,18 @@
-import { workout } from "gym.js"
-import { getAllAugmentationsFromOwnFactions, enoughRep } from "/utilities"
+import { workout } from "./gym"
+import { getAllAugmentationsFromOwnFactions, enoughRep, getGoals, getInstitutions, getOptions, writeFile, keepFocus, isCriming } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
 	ns.disableLog("ALL")
-	if (ns.args[0] || ns.getPlayer().crimeType !== "") return
+	if (keepFocus(ns) || isCriming(ns)) return
 	await buildTable(ns)
 	ns.run("runin.js", 1, 1, "singularity.js")
-	/*
-	const institutions = JSON.parse(ns.read("institutions.txt"))
-	//const task = { "type": "work", "at": "ECorp", "subType": "Hacking contracts" }
-	//const task = { "type": "work", "at": "KuaiGong International", "subType": "IT job" }
-	const task = { "type": "faction", "at": "Slum Snakes", "subType": "field work" }
-	const options = JSON.parse(ns.read("options.txt"))
-	const statsGoal = JSON.parse(ns.read("required_stats.txt"))
-	//ns.tprint(taskValue(ns, options, statsGoal, task))
-	const statsGain = measure(ns, options, institutions, task)
-	ns.tprint(statsGain)
-	ns.tprint(taskValue(ns, options, institutions, statsGoal, task))
-	*/
 }
 
 async function buildTable(ns) {
-	const options = JSON.parse(ns.read("options.script"))
+	const options = getOptions(ns)
 	await ns.scp("required_stats.script", "home", options.host)
-	const statsGoal = JSON.parse(ns.read("required_stats.script"))
-	const institutions = JSON.parse(ns.read("institutions.script"))
+	const statsGoal = getGoals(ns)
+	const institutions = getInstitutions(ns)
 
 	const table = { "tasks": [] }
 	const t = Date.now()
@@ -39,7 +27,7 @@ async function buildTable(ns) {
 		last = d
 	}
 	ns.print("end: " + (Date.now() - t))
-	await ns.write("tasks.txt", JSON.stringify(table, null, 2), "w")
+	await writeFile(ns, "tasks.txt", table)
 }
 
 function allTasks(ns, institutions) {
@@ -78,11 +66,13 @@ function isOwnFaction(ns, corp) {
 }
 
 async function taskValue(ns, options, institutions, statsGoal, task) {
+	if (task.type == "train" && ns.getPlayer().money < 5e6) return 0
 	const workoutFile = "workout_gain_" + task.subType + ".txt"
 	if (task.type == "crime") return crimeBenefit(ns, options, statsGoal, task.subType)
 	if (task.type == "work" && isOwnFaction(ns, task.at)) return 0
 
 	let statsGain
+	
 	if (task.type == "train" && ns.fileExists(workoutFile))
 		statsGain = parseFile(ns, workoutFile)
 	else {

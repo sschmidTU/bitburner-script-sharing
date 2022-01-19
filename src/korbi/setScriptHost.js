@@ -1,10 +1,11 @@
 import { copyTo } from "./copyScriptsTo"
+import { getOptions, updateOptions } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
-    let options = JSON.parse(ns.read("options.script"))
+    let options = getOptions(ns)
     if (ns.getServerMaxRam("home") > 1024) {
         if (options.host !== "home")
-            return await setHost(ns, options, "home")
+            return await setHost(ns, "home")
     }
     try {
         var hostRam = ns.getServerMaxRam(options.host)
@@ -19,10 +20,9 @@ export async function main(ns) {
     }
 }
 
-async function setHost(ns, options, host) {
+async function setHost(ns, host) {
     ns.tprint("New host: " + host)
-    options.host = host
-    await ns.write("options.script", JSON.stringify(options, null, 2), "w")
+    await updateOptions(ns, "host", host)
     await copyTo(ns, host)
 }
 

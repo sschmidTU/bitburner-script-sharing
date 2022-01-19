@@ -1,4 +1,3 @@
-import { getServerList } from "utilities.js"
 /** @param {NS} ns **/
 export async function main(ns) {
     ns.disableLog("getServerMaxRam")
@@ -75,14 +74,4 @@ function getLargestPurchasedServerRam(ns) {
         }
     }
     return [maxRam, num]
-}
-
-function isRequired(ns) {
-    let usedRam = 0
-    let totalRam = 0
-    for (const server of getServerList(ns)) {
-        totalRam += ns.getServerMaxRam(server)
-        usedRam += ns.getServerUsedRam(server)
-    }
-    return usedRam > totalRam / 2
 }

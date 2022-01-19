@@ -1,9 +1,12 @@
 /** @param {NS} ns **/
 
+import { getFile, getOptions, writeFile } from "./utilities"
+
 export async function main(ns) {
 	const h = ns.hacknet
-	const options = JSON.parse(ns.read("options.script"))
-	const maxPrice = Math.min(options.maxHacknetCost * ns.getPlayer().money, ns.getServerMoneyAvailable("home") - options.keepMoney)
+	const options = getOptions(ns)
+	const money = ns.getPlayer().money
+	const maxPrice = Math.min(options.maxHacknetCost * money, money - options.keepMoney)
 	const [doUpgrade, node, cost] = await getMostEffectiveItem(ns)// getCheapestItem(h)
 	if (cost * options.money_weight < maxPrice)
 		doUpgrade(node, 1)
@@ -31,7 +34,7 @@ function getCheapestItem(h) {
 async function getMostEffectiveItem(ns) {
 	const h = ns.hacknet
 	const file = "hacknet_gain.txt"
-	const dict = JSON.parse(ns.read(file))
+	const dict = getFile(ns, file)
 	const doUpgrade = [h.upgradeLevel, h.upgradeRam, h.upgradeCore, h.purchaseNode]
 	const upgradeCost = [h.getLevelUpgradeCost, h.getRamUpgradeCost, h.getCoreUpgradeCost, h.getPurchaseNodeCost]
 	
@@ -53,7 +56,7 @@ async function getMostEffectiveItem(ns) {
 		return getCheapestItem(h)
 	}
 
-	await ns.write(file, dict, "w")
+	await writeFile(ns, file, dict)
 	return bestItem
 }
 

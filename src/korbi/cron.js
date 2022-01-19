@@ -1,3 +1,5 @@
+import { getFile, getOptions } from "./utilities"
+
 /** @param {NS} ns **/
 export async function main(ns) {
 	ns.disableLog("sleep")
@@ -6,13 +8,13 @@ export async function main(ns) {
 }
 
 async function cron(ns) {
-	let table = JSON.parse(ns.read("cron.txt"))
+	let table = getFile(ns, "cron.txt")
 	for (const script in table) {
 		table[script] = 0
 	}
 	let time = 0
 	while (true) {
-		const options = JSON.parse(ns.read("options.script"))
+		const options = getOptions(ns)
 		for (const script in table) {
 			if (time > table[script]) {
 				let host = options.host
@@ -23,7 +25,7 @@ async function cron(ns) {
 					await ns.scp(script, "home", options.host)
 				}
 				if (ns.exec(script, host, 1, ...ns.args) != 0) {
-					table[script] = time + JSON.parse(ns.read("cron.txt"))[script]
+					table[script] = time + getFile(ns, "cron.txt")[script]
 					break
 				}
 			}
