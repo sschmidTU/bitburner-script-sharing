@@ -90,9 +90,12 @@ async function taskValue(ns, options, institutions, statsGoal, task) {
 	if (["work", "faction"].includes(task.type)) {
 		task.time = reputationTime(ns, options, statsGain.rep, task)
 		value += options.repDefaultTime / task.time
-	}
-	if (task.subType.includes("lade")) {
-		value *= 1.1
+		if (task.type === "work") {
+			value *= 1.5
+		}
+		if (task.at.includes("mni")) {
+			value *= 2
+		}
 	}
 	return value
 }
