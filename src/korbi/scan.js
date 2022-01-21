@@ -2,7 +2,6 @@ import { getAllServers } from "./utilities"
 
 /** @param {NS} ns **/
 export async function main(ns) {
-	ns.tail()
 	const servers = getAllServers(ns).filter(s => !ns.getPurchasedServers().includes(s))
 	for (const server of servers) {
 		await scan(ns, server)

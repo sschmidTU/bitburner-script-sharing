@@ -1,6 +1,8 @@
+import { getFile, getOptions, writeFile, writeOptions } from "./utilities"
+
 /** @param {NS} ns **/
 export async function main(ns) {
-	const options = JSON.parse(ns.read("options.script"))
+	const options = getOptions(ns)
 	const availableRam = ns.getServerMaxRam(options.host)
 	let opts = {}
 	let scripts = {}
@@ -12,7 +14,7 @@ export async function main(ns) {
 	opts.maxHacknetCost = 0.01
 	opts.cronSleep = 700
 	opts.maxWeakenTargets = 5
-	opts.hackPercent = 0.5
+	opts.hackPercent = 0.8
 	opts.workOnProgram = 1000
 	opts.buyProgramThreshold = 1
 	opts.maxServersPerSize = 3
@@ -68,14 +70,14 @@ export async function main(ns) {
 }
 
 async function setOptions(ns, opts, scripts, availableRam) {
-	let options = JSON.parse(ns.read("options.script"))
+	let options = getOptions(ns)
 	const condition1 = (options.hostRam > 1024 && availableRam > 1024)
 	const condition2 = options.hostRam == availableRam
 	const alwaysUpdate = ns.args[0] == "set"
 	if (!alwaysUpdate && (condition1 || condition2)) return false
 	options.hostRam = availableRam
 
-	let cron = JSON.parse(ns.read("cron.txt"))
+	let cron = getFile(ns, "cron.txt")
 	let maxRamRequired = 12
 	for (const script in scripts) {
 		const ramReq = ns.getScriptRam(script+".js")
@@ -88,12 +90,12 @@ async function setOptions(ns, opts, scripts, availableRam) {
 			delete cron[script+".js"]
 		}
 	}
-	await ns.write("cron.txt", JSON.stringify(cron, null, 2), "w")
+	await writeFile(ns, "cron.txt", cron)
 	options.keepRam = maxRamRequired * 1.1 + 12
 	for (const opt in opts) {
 		options[opt] = opts[opt]
 	}
-	await ns.write("options.script", JSON.stringify(options, null, 2), "w")
+	await writeOptions(ns, options)
 	await ns.scp("options.script", "home", options.host)
 	
 	return true
