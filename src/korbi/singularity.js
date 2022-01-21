@@ -1,5 +1,5 @@
 import { performAction } from "./taskValue"
-import { keepFocus, getCrackNames, exists, connect, writeOptions, getOptions, getTasks, getInstitutions, getGoals, getAllAugmentationsFromOwnFactions, enoughRep, getPossibleTargets } from "./utilities"
+import { keepFocus, getCrackNames, exists, connect, writeOptions, getOptions, getTasks, getInstitutions, getGoals, getAllAugmentationsFromOwnFactions, enoughRep, getPossibleTargets} from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
 	//ns.tail()
@@ -127,7 +127,8 @@ async function augment(ns, options) {
 	await checkSetEnoughRep(ns, options, allAugs)
 	const obtainableAugs = allAugs.filter(a => isObtainable(ns, a[0], a[1])).filter(a => checkForLowerGen(ns, a[0]))
 	if (obtainableAugs.length > 0 && (enoughAugsForReset(ns, options, obtainableAugs, allAugs))) {
-		const sortFunction = (a, b) => ns.getAugmentationPrice(a[0]) - ns.getAugmentationPrice(b[0])
+		const augValue = aug => ns.getAugmentationPrice(aug) * ns.getAugmentationRepReq(aug)
+		const sortFunction = (a, b) => augValue(a[0]) - augValue(b[0])
 		const sorted = obtainableAugs.filter(notNeuroFlux).sort(sortFunction)
 		if (sorted.length > 0) {
 			var [aug, f] = sorted[sorted.length - 1]
