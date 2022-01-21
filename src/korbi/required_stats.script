@@ -4,7 +4,7 @@
   "defense": 300,
   "agility": 300,
   "dexterity": 300,
-  "charisma": 300,
+  "charisma": 200,
   "kills": 30,
-  "money": 100000
+  "money": 10000
 }

@@ -1,14 +1,5 @@
 /** @param {NS} ns **/
 
-export function getRootedServers(ns) {
-	const allServers = getAllServers(ns)
-	for (const s of allServers) {
-		if (!ns.hasRootAccess(s) && isRootable(ns, s))
-			ns.run("root.js", 1, s)
-	}
-	return allServers.filter(ns.hasRootAccess)
-}
-
 export function getAllServers(ns) {
 	let list = ns.scan("home")
 	let final = []
@@ -20,13 +11,22 @@ export function getAllServers(ns) {
 				list.push(s)
 		}
 	}
+	for (const s of final) {
+		if (!ns.hasRootAccess(s) && isRootable(ns, s))
+			ns.run("root.js", 1, s)
+	}
 	return final
 }
 
+export function getPossibleMoneyTargets(ns) {
+	return getPossibleTargets(ns).filter(s => ns.getServerMaxMoney(s) > 0)
+}
+
 export function getPossibleTargets(ns) {
-	return getRootedServers(ns)
+	return getAllServers(ns)
+		.filter(s => s !== "home")
+		.filter(ns.hasRootAccess)
 		.filter(s => !ns.getPurchasedServers().includes(s))
-		.filter(s => ns.getServerMaxMoney(s) > 0)
 		.filter(s => isHackable(ns, s))
 }
 

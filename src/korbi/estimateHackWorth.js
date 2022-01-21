@@ -1,5 +1,5 @@
 import { getThreadsRatio } from "./scheduler"
-import { getOptions, getNumberOfRunningScripts, writeServerMoney, getPossibleTargets, needsWeakening } from "./utilities"
+import { getOptions, getNumberOfRunningScripts, writeServerMoney, getPossibleMoneyTargets, needsWeakening } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
 	ns.disableLog("ALL")
@@ -10,7 +10,7 @@ async function serverLoop(ns) {
 	const options = getOptions(ns)
 	
 	let serversFile = {}
-	for (const server of getPossibleTargets(ns)) {
+	for (const server of getPossibleMoneyTargets(ns)) {
 		const value = getServerValue(ns, options, server)
 		serversFile[server] = value
 		weakenIfNecessary(ns, options, server)
