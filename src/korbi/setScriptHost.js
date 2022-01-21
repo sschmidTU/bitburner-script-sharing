@@ -2,20 +2,21 @@ import { copyTo } from "./copyScriptsTo"
 import { getOptions, updateOptions } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
-    let options = getOptions(ns)
+    let currentHost = getOptions(ns).host
     if (ns.getServerMaxRam("home") > 1024) {
-        if (options.host !== "home")
+        if (currentHost !== "home")
             return await setHost(ns, "home")
+        return
     }
     try {
-        var hostRam = ns.getServerMaxRam(options.host)
+        var hostRam = ns.getServerMaxRam(currentHost)
     } catch (err) {
-        return await setHost(ns, options, "home")
+        return await setHost(ns, "home")
     }
     if (hostRam < 1024 || ns.args[0] == "set") {
-        const newHost = findMaxRamHost(ns, options.host, hostRam)
-        if (options.host != newHost || ns.args[0] == "set") {
-            await setHost(ns, options, newHost)        
+        const newHost = findMaxRamHost(ns, currentHost, hostRam)
+        if (currentHost != newHost || ns.args[0] == "set") {
+            await setHost(ns, newHost)        
         }
     }
 }
