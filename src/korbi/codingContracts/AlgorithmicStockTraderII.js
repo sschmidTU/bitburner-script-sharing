@@ -27,7 +27,7 @@ export function findallminmax(data) {
 	for (let i = 1; i < data.length - 1; i++) {
 		if (data[i] < data[i - 1] && data[i] <= data[i + 1]) {
 			mins.push(data[i])
-		} else if (data[i] > data[i - 1] && data[i] >= data[i + 1]) {
+		} else if (data[i] >= data[i - 1] && data[i] > data[i + 1]) {
 			maxs.push(data[i])
 		}
 	}
