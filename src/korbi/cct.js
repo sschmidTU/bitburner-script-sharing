@@ -31,7 +31,7 @@ export function solve(ns, func, test=false) {
 		ns.print("Result: " + result)
 		if (!result) {
 			ns.print(filename + " is wrong!!")
-			ns.write(filename + ".txt", data)
+			ns.write(filename + ".txt", func.name + "\n" + data)
 		}
 	}
 }
