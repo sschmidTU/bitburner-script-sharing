@@ -35,29 +35,29 @@ async function getMostEffectiveItem(ns) {
 	const h = ns.hacknet
 	const file = "hacknet_gain.txt"
 	const dict = getFile(ns, file)
-	const doUpgrade = [h.upgradeLevel, h.upgradeRam, h.upgradeCore, h.purchaseNode]
-	const upgradeCost = [h.getLevelUpgradeCost, h.getRamUpgradeCost, h.getCoreUpgradeCost, h.getPurchaseNodeCost]
+	const doUpgrade = [h.upgradeLevel, h.upgradeRam, h.upgradeCore]
+	const upgradeCost = [h.getLevelUpgradeCost, h.getRamUpgradeCost, h.getCoreUpgradeCost]
 	
 	let bestNode = -1
-	let shortestTime = 0
-	let bestItem = null
+	let shortestTime = h.getPurchaseNodeCost() / 1000
+	let bestItem = h.purchaseNode
+	let bestCost = h.getPurchaseNodeCost()
 	for (let node = 0; node < h.numNodes(); node++) {
 		for (let i = 0; i < doUpgrade.length; i++) {
-			const equalTime = upgradeCost[i](node, 1) / calculateIncrease(ns, dict, node, doUpgrade[i])
+			const cost = upgradeCost[i](node, 1)
+			const increase = calculateIncrease(ns, dict, node, doUpgrade[i])
+			const equalTime = cost / increase
 			if (equalTime < shortestTime) {
 				shortestTime = equalTime
 				bestNode = node
 				bestItem = doUpgrade[i]
+				bestCost = cost
 			}
 		}
 	}
-	//ns.tprint("node: " + bestNode + " time: " + shortestTime + " item: " + bestItem)
-	if (bestItem === null) {
-		return getCheapestItem(h)
-	}
 
 	await writeFile(ns, file, dict)
-	return bestItem
+	return [bestItem, bestNode, bestCost] 
 }
 
 function calculateIncrease(ns, dict, node, upgradeItem) {
@@ -67,14 +67,14 @@ function calculateIncrease(ns, dict, node, upgradeItem) {
 	switch (upgradeItem) {
 		case (h.upgradeLevel):
 			stats.level += 1
+			break
 		case (h.upgradeRam):
 			stats.ram += 1
+			break
 		case (h.upgradeCore):
-			stats.core += 1
-		case (h.purchaseNode):
-			return stats.production / 10 // just a poor estimate
+			stats.cores += 1
+			break
 	}
-
 	const upgradedGain = gain(ns, dict, stats)
 	if (currentGain == -1 || upgradedGain == -1) return -1
 	return (upgradedGain - currentGain) * ns.getPlayer().hacknet_node_money_mult
