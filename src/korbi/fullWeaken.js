@@ -5,22 +5,24 @@ export async function main(ns) {
     await fullWeaken(ns, ns.args[0])
 }
 
-export async function fullWeaken(ns, server) {
-	const weakenAmount = 0.05
+export async function fullWeaken(ns, target) {
 	const host = "home"
 	const script = "weaken.js"
 	const options = getOptions(ns)
-	while (ns.getServerSecurityLevel(server) > ns.getServerMinSecurityLevel(server) * 1.01) {
-		const security = ns.getServerSecurityLevel(server) - ns.getServerMinSecurityLevel(server)
-		const nThreadsRequired = security / weakenAmount / ns.getServer(host).cpuCores
-		const nThreadsMax = getServerThreads(ns, options, host)
-		ns.print(nThreadsMax)
-		const nThreads = Math.min(nThreadsMax, nThreadsRequired)
+	let nThreadsRequired = requiredThreads(ns, host, target)
+	while (nThreadsRequired > 0) {
+		const nThreads = Math.min(nThreadsRequired, getServerThreads(ns, options, host))
 		if (nThreads > 0) {
-			ns.run(script, nThreads, server)
+			ns.run(script, nThreads, target, nThreadsRequired)
+			nThreadsRequired -= nThreads
 		}
-		if (nThreadsRequired == nThreads) return
-		const sleepTime = ns.getWeakenTime(server) + 100
-		await ns.sleep(sleepTime)
+		await ns.sleep(10e3)
 	}
+}
+
+function requiredThreads(ns, host, target) {
+	const weakenAmount = 0.05
+	const security = ns.getServerSecurityLevel(target) - ns.getServerMinSecurityLevel(target)
+	const nThreadsRequired = security / weakenAmount / ns.getServer(host).cpuCores
+	return nThreadsRequired
 }
