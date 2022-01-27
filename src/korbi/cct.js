@@ -20,7 +20,6 @@ export async function main(ns) {
 }
 
 export function solve(ns, func, test=false) {
-	ns.tail()
     const filename = ns.args[0]
 	const server = ns.args[1]
 	const data = ns.codingcontract.getData(filename, server)
@@ -30,6 +29,7 @@ export function solve(ns, func, test=false) {
 		const result = ns.codingcontract.attempt(solution, filename, server)
 		ns.print("Result: " + result)
 		if (!result) {
+			ns.tail()
 			ns.print(filename + " is wrong!!")
 			ns.write(filename + ".txt", func.name + "\n" + data)
 		}

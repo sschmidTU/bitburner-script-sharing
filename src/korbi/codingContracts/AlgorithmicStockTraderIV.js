@@ -1,4 +1,4 @@
-import { findallminmax, minmaxsum } from "AlgorithmicStockTraderII.js"
+import { findallminmax, minmaxsum } from "codingContracts/AlgorithmicStockTraderII"
 import { solve } from "/cct"
 
 /** @param {NS} ns **/

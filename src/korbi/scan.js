@@ -14,7 +14,8 @@ export async function scan(ns, server) {
 		if (isStory(f))
 			await ns.scp(f, server, "home")
 		else if (isCodingContract(f))
-			await addCodingContractToCron(ns, server, f)
+			ns.run("cct.js", 1, f, server)
+			//await addCodingContractToCron(ns, server, f)
 	}
 }
 
