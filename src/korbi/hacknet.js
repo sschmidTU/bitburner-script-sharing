@@ -39,7 +39,7 @@ async function getMostEffectiveItem(ns) {
 	const upgradeCost = [h.getLevelUpgradeCost, h.getRamUpgradeCost, h.getCoreUpgradeCost]
 	
 	let bestNode = -1
-	let shortestTime = h.getPurchaseNodeCost() / 1000
+	let shortestTime = h.getPurchaseNodeCost() / lowestNodeGain(ns, dict)
 	let bestItem = h.purchaseNode
 	let bestCost = h.getPurchaseNodeCost()
 	for (let node = 0; node < h.numNodes(); node++) {
@@ -58,6 +58,17 @@ async function getMostEffectiveItem(ns) {
 
 	await writeFile(ns, file, dict)
 	return [bestItem, bestNode, bestCost] 
+}
+
+function lowestNodeGain(ns, dict) {
+	const h = ns.hacknet
+	let maxGain = Infinity
+	for (let node = 0; node < h.numNodes(); node++) {
+		const g = gain(ns, dict, h.getNodeStats(node))
+		if (g < maxGain)
+			maxGain = g
+	}
+	return maxGain
 }
 
 function calculateIncrease(ns, dict, node, upgradeItem) {

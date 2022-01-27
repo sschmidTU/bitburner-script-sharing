@@ -123,13 +123,13 @@ async function installBackdoor(ns) {
 }
 
 async function augment(ns, options) {
-	const allAugs = getAllAugmentationsFromOwnFactions(ns).filter(a => isHackingAug(ns, a[0]))
+	const allAugs = getAllAugmentationsFromOwnFactions(ns)
 	await checkSetEnoughRep(ns, options, allAugs)
 	const obtainableAugs = allAugs.filter(a => isObtainable(ns, a[0], a[1])).filter(a => checkForLowerGen(ns, a[0]))
 	if (obtainableAugs.length > 0 && (enoughAugsForReset(ns, options, obtainableAugs, allAugs))) {
 		const augValue = aug => ns.getAugmentationPrice(aug) * ns.getAugmentationRepReq(aug)
 		const sortFunction = (a, b) => augValue(a[0]) - augValue(b[0])
-		const sorted = obtainableAugs.filter(notNeuroFlux).sort(sortFunction)
+		const sorted = obtainableAugs.filter(a => notNeuroFlux(a[0])).sort(sortFunction)
 		if (sorted.length > 0) {
 			var [aug, f] = sorted[sorted.length - 1]
 		} else {
@@ -184,9 +184,13 @@ function enoughMoney(ns, augmentation) {
 	return ns.getAugmentationPrice(augmentation) < ns.getPlayer().money
 }
 
-async function installAugmentations(ns, options) {
-	if (keepFocus(ns)) return
-	if (getNQueuedAugs(ns) >= options.resetAfterAugmentations) {
+async function installAugmentations(ns, options, force=false) {
+	if (getNQueuedAugs(ns) >= options.resetAfterAugmentations || force) {
+		if (keepFocus(ns)) {
+			ns.tprint("Not resetting because of focus!")
+			return
+		}
+
 		while (await augment(ns, options)) { }
 		await nextFactionGroup(ns)
 		ns.scriptKill("cron.js", "home")
@@ -201,7 +205,7 @@ async function installAugmentations(ns, options) {
 }
 
 async function nextFactionGroup(ns) {
-	let options = JSON.parse(ns.read("options.script"))
+	let options = getOptions(ns)
 	options.factionGroup = (options.factionGroup % 3) + 1
 	await writeOptions(ns, options)
 }
@@ -209,24 +213,23 @@ async function nextFactionGroup(ns) {
 async function checkEndgameFaction(ns, options) {
 	ns.print("Checking endgame faction")
 	for (const faction of ns.getPlayer().factions) {
-		if (["ECorp", "NWO", "Fulcrum Secret Technologies", "BitRunners", "Daedalus", "The Covenant", "Illuminati", "Speakers for the Dead"].includes(faction)) {
+		if (isEndgameFaction(ns, faction)) {
 			const favor = ns.getFactionFavor(faction)
 			const gain = ns.getFactionFavorGain(faction)
 			const condition1 = favor < options.endGameFavorReset[0] - 30 && favor + gain >= options.endGameFavorReset[0]
 			const condition2 = favor < options.endGameFavorReset[1] && favor + gain >= options.endGameFavorReset[1]
-			ns.tprint("Eearly reset: " + condition1 + " " + condition2)
 			if (condition1 || condition2) {
 				ns.tprint("Resetting for endgame faction: " + faction)
-				const n = options.resetAfterAugmentations
-				options.resetAfterAugmentations = 0
-				for (let _ = 0; _ < n; _++) {
-					augment(ns, options)
-				}
-				await installAugmentations(ns, options)
+				await installAugmentations(ns, options, true)
 			}
 		}
 	}
 	return false
+}
+
+//["ECorp", "NWO", "Fulcrum Secret Technologies", "BitRunners", "Daedalus", "The Covenant", "Illuminati", "Speakers for the Dead"]
+export function isEndgameFaction(ns, faction) {
+	return ns.getAugmentationsFromFaction(faction).filter(notNeuroFlux).map(ns.getAugmentationRepReq).sort()[0] > 500e3
 }
 
 function getNQueuedAugs(ns) {
@@ -234,25 +237,31 @@ function getNQueuedAugs(ns) {
 }
 
 function getFilteredAugmentations(ns) {
-	const filterEnoughRep = a => ns.getAugmentationRepReq(a[0]) < ns.getFactionRep(a[1])
-	const enoughRepAugs = getAllAugmentationsFromOwnFactions(ns).filter(filterEnoughRep).map(a => a[0])
-	const filterNotInEnoughRep = a => !enoughRepAugs.includes(a[0])
-	const augmentations = getAllAugmentationsFromOwnFactions(ns).filter(aug => isHackingAug(ns, aug[0])).filter(a => !filterEnoughRep(a)).filter(filterNotInEnoughRep).filter(notNeuroFlux)
+	const enoughRep = a => ns.getAugmentationRepReq(a[0]) < ns.getFactionRep(a[1])
+	const enoughRepAugs = getAllAugmentationsFromOwnFactions(ns).filter(enoughRep).map(a => a[0])
+	const inEnoughRepAugs = a => enoughRepAugs.includes(a[0])
+	const augmentations = getAllAugmentationsFromOwnFactions(ns)
+		.filter(a => !inEnoughRepAugs(a))
+		.filter(a => notNeuroFlux(a[0]))
 	return augmentations
 }
 
 function donate(ns, options) {
+	ns.tprint("Donate:")
 	for (const aug of getFilteredAugmentations(ns)) {
-
+		ns.tprint(aug)
 		const [augmentation, faction] = aug
-		const hasEnoughFavor = ns.getFactionFavor(faction) >= ns.getFavorToDonate()
+		if (ns.getFactionFavor(faction) < ns.getFavorToDonate()) return false
+
 		const reqMoney = -getRequiredDonationMoney(ns, ns.getFactionRep(faction) - ns.getAugmentationRepReq(augmentation))
-		const hasEnoughMoney = reqMoney < ns.getPlayer().money
+		ns.tprint("need: " + reqMoney / 1e6 + "M for " + augmentation + " rep: " + ns.getAugmentationRepReq(augmentation) /1e3 + "k")
 		//ns.tprint("Donating to " + faction + " if " + hasEnoughFavor + " and " + hasEnoughMoney + " to get " + augmentation)
 		//ns.tprint((reqMoney / 1e9).toFixed(1) + "B")
-		if (hasEnoughFavor && hasEnoughMoney) {
+		if (reqMoney < ns.getPlayer().money) {
 			ns.tprint("Donating to " + faction + " now!")
+			ns.tprint("rep: " + ns.getFactionRep(faction)/1e3 + "k")
 			ns.donateToFaction(faction, reqMoney)
+			ns.tprint("rep: " + ns.getFactionRep(faction))
 			return false
 		}
 	}
@@ -260,7 +269,6 @@ function donate(ns, options) {
 
 
 export function isHackingAug(ns, augName) {
-	return true
 	const augStats = ns.getAugmentationStats(augName)
 	let n = 0
 	for (const stat in augStats) {
@@ -276,6 +284,6 @@ function getRequiredDonationMoney(ns, reputation) {
 	return reputation / ns.getPlayer().faction_rep_mult * 1e6
 }
 
-function notNeuroFlux(augmentation) {
-	return augmentation[0] !== "NeuroFlux Governor"
+function notNeuroFlux(aug) {
+	return !aug.includes("NeuroFlux Governor")
 }
