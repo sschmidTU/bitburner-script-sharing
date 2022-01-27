@@ -1,31 +1,22 @@
+import { getOptions, totalRam, usableMoney } from "./utilities"
+
 /** @param {NS} ns **/
 export async function main(ns) {
     ns.disableLog("getServerMaxRam")
-    const options = JSON.parse(ns.read("options.script"))
-    let [lastBoughtRam, nLastBought] = getLargestPurchasedServerRam(ns)
-    const serverLimit = ns.getPurchasedServerLimit()
-    const servers = ns.getPurchasedServers()
-    ns.print("Number of servers: " + servers.length)
-    ns.print("LastBoughtRam: " + lastBoughtRam + " (" + nLastBought + ")")
-    const money = ns.getServerMoneyAvailable("home") - options.keepMoney
-    const ram = getMaxPayableServer(ns, money)
-    if (ram >= lastBoughtRam) {
-        if (ram == lastBoughtRam && nLastBought >= options.maxServersPerSize) return
-        if (servers.length == serverLimit) {
-            const [smallest, smallestSize] = findSmallestServer(ns, servers)
-            if (smallestSize < ram) {
-                await deleteServer(ns, smallest)
-            } else {
-                return
-            }
-        }
+    ns.tail()
 
-        ns.tprint("Buying: " + ram + " for " + (ns.getPurchasedServerCost(ram) / 1e6).toFixed(0) + "M")
-        ns.purchaseServer("-", ram)
-        if (ram > lastBoughtRam) {
-            lastBoughtRam = ram
-        }
-    }
+    const ram = getMaxPayableServer(ns)
+    if (ram >= minimumRamToBuy(ns))
+        await buyNewServer(ns, ram)
+}
+
+async function buyNewServer(ns, ram) {
+    const servers = ns.getPurchasedServers()
+    if (servers.length == ns.getPurchasedServerLimit())
+        await deleteServer(ns, findSmallestServer(ns, servers))
+
+    ns.tprint("Buying: " + ram + " for " + (ns.getPurchasedServerCost(ram) / 1e6).toFixed(0) + "M")
+    ns.purchaseServer("-", ram)
 }
 
 async function deleteServer(ns, server) {
@@ -35,43 +26,19 @@ async function deleteServer(ns, server) {
 }
 
 function findSmallestServer(ns, servers) {
-    let smallest = servers[0]
-    let smallestSize = ns.getServerMaxRam(smallest)
-    for (const s of servers) {
-        const sram = ns.getServerMaxRam(s)
-        if (sram < smallestSize) {
-            smallestSize = sram
-            smallest = s
-        }
-    }
-    return [smallest, smallestSize]
+    return servers.sort((a, b) => ns.getServerMaxRam(b) - ns.getServerMaxRam(a))[0]
 }
 
-function getMaxPayableServer(ns, money) {
+function getMaxPayableServer(ns) {
+    const money = usableMoney(ns, getOptions(ns))
     let serverRam = ns.getPurchasedServerMaxRam()
-    ns.print("max ram:" + serverRam)
-    while (ns.getPurchasedServerCost(serverRam) > money) {
+    while (ns.getPurchasedServerCost(serverRam) > money && serverRam > 4) {
         serverRam /= 2
-        if (serverRam <= 4) { // don't by very small servers
-            return 0
-        }
     }
     ns.print("buyable ram: " + serverRam + " for " + (ns.getPurchasedServerCost(serverRam) / 1e6).toFixed(0) + "M")
     return serverRam
 }
 
-function getLargestPurchasedServerRam(ns) {
-    let maxRam = 0
-    let num = 0
-    for (const s of ns.getPurchasedServers()) {
-        const ram = ns.getServerMaxRam(s)
-        if (ram == maxRam) {
-            num++
-        }
-        if (ram > maxRam) {
-            maxRam = ram
-            num = 1
-        }
-    }
-    return [maxRam, num]
+function minimumRamToBuy(ns) {
+    return totalRam(ns) / 2
 }

@@ -167,6 +167,8 @@ export function enoughRep(ns, augmentation, faction) {
 
 export function getAllAugmentationsFromOwnFactions(ns) {
 	const ownedAugmentations = ns.getOwnedAugmentations(true)
+	ns.tprint("owned augs:")
+	ns.tprint(ownedAugmentations)
 	let augmentations = []
 	for (const f of ns.getPlayer().factions) {
 		for (const aug of ns.getAugmentationsFromFaction(f)) {
@@ -175,6 +177,8 @@ export function getAllAugmentationsFromOwnFactions(ns) {
 			}
 		}
 	}
+	ns.tprint("faction augs: ")
+	ns.tprint(augmentations)
 	return augmentations
 }
 
@@ -188,4 +192,16 @@ export function isCriming(ns) {
 
 export function needsWeakening(ns, options, server) {
 	return ns.getServerSecurityLevel(server) > ns.getServerMinSecurityLevel(server) * options.securityThreshold
+}
+
+export function last(list) {
+	return list.slice(-1)[0]
+}
+
+export function totalRam(ns) {
+	return sum(getAllServers(ns).map(ns.getServerMaxRam))
+}
+
+export function usableMoney(ns, options) {
+	return ns.getPlayer().money - options.keepMoney
 }
