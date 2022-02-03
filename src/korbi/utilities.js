@@ -73,7 +73,7 @@ export function isRootable(ns, server) {
 }
 
 export function isHackable(ns, server) {
-	return ns.getServerRequiredHackingLevel(server) < ns.getHackingLevel()
+	return ns.getServerRequiredHackingLevel(server) <= ns.getHackingLevel()
 }
 
 export function isSecure(ns, server, options) {
