@@ -1,4 +1,4 @@
-import { sum, updateOptions, getServerThreads, getOptions, getAllServers } from "./utilities";
+import { sum, updateOptions, getServerThreads, getOptions, getRootAccessServers } from "./utilities";
 
 /** @param {NS} ns **/
 export async function main(ns) {
@@ -14,7 +14,8 @@ export async function main(ns) {
 				targetTimes[t] = 0
 			}
 		}
-		let servers = getAllServers(ns)	
+		let servers = getRootAccessServers(ns).filter(ns.hasRootAccess)
+		
 		await prepareServers(ns, options, servers)
 		await updateLoopTime(ns, targets)
 

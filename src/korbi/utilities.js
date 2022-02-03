@@ -22,10 +22,13 @@ export function getPossibleMoneyTargets(ns) {
 	return getPossibleTargets(ns).filter(s => ns.getServerMaxMoney(s) > 0)
 }
 
+export function getRootAccessServers(ns) {
+	return getAllServers(ns).filter(ns.hasRootAccess)
+}
+
 export function getPossibleTargets(ns) {
-	return getAllServers(ns)
+	return getRootAccessServers(ns)
 		.filter(s => s !== "home")
-		.filter(ns.hasRootAccess)
 		.filter(s => !ns.getPurchasedServers().includes(s))
 		.filter(s => isHackable(ns, s))
 }
@@ -199,7 +202,7 @@ export function last(list) {
 }
 
 export function totalRam(ns) {
-	return sum(getAllServers(ns).map(ns.getServerMaxRam))
+	return sum(getRootAccessServers(ns).map(ns.getServerMaxRam))
 }
 
 export function usableMoney(ns, options) {
