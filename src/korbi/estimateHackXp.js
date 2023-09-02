@@ -3,8 +3,10 @@ import { getPossibleTargets, getServerXp, writeServerXp } from "./utilities"
 export async function main(ns) {
 	ns.disableLog("ALL")
 	const times = [ns.getHackTime, ns.getWeakenTime, ns.getGrowTime]
-	const scripts = ["hackLoop.ns", "weakenLoop.ns", "growLoop.ns"]
+	const scripts = ["hackLoop.ns.js", "weakenLoop.ns.js", "growLoop.ns.js"]
+	const maxTime = 200e3
 	const servers = getPossibleTargets(ns)
+		.filter(s => ns.getWeakenTime(s) < maxTime)
 	for (const server of servers) {
 		await updateXpTable(ns, server, times, scripts)
 	}

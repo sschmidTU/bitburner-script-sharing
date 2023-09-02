@@ -44,7 +44,7 @@ export function workout(ns, stat) {
 		city = "Volhaven"
 	}
 	if (ns.getPlayer().city !== city) {
-		ns.travelToCity(city)
+		ns.singularity.travelToCity(city)
 	}
 
 	if (stat === "charisma") {

@@ -1,14 +1,14 @@
 /** @param {NS} ns **/
 export async function main(ns) {
-    upgradeHome(ns)
+	upgradeHome(ns)
 }
 
 function upgradeHome(ns) {
-	if (ns.getPlayer().money > ns.getUpgradeHomeRamCost()) {
-		ns.upgradeHomeRam()
+	if (ns.getPlayer().money > ns.singularity.getUpgradeHomeRamCost()) {
+		ns.singularity.upgradeHomeRam()
 	}
-	if (ns.getPlayer().money > ns.getUpgradeHomeCoresCost()) {
-		ns.upgradeHomeCores()
+	if (ns.getPlayer().money > ns.singularity.getUpgradeHomeCoresCost()) {
+		ns.singularity.upgradeHomeCores()
 	}
 	return false
 }

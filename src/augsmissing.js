@@ -132,12 +132,12 @@ export async function main(ns) {
 			type: t.companyWork
 		},
 	];
-	const augsOwned = ns.getOwnedAugmentations();
+	const augsOwned = ns.singularity.getOwnedAugmentations(false);
 	for (const faction of factions) {
 		ns.tprint("~~~~~~ " + faction + " ~~~~~");
 		//ns.tprint("faction: " + faction);
 		//ns.tprint("~~~~~~~~~~~");
-		const augs = ns.getAugmentationsFromFaction(faction);
+		const augs = ns.singularity.getAugmentationsFromFaction(faction);
 		for (const aug of augs) {
 			let augInfo = undefined;
 			let skip = false;

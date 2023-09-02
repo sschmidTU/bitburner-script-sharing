@@ -1,10 +1,11 @@
+import { createProgram } from "./createProgram"
 import { performAction } from "./taskValue"
-import { keepFocus, getCrackNames, exists, connect, writeOptions, getOptions, getTasks, getInstitutions, getGoals, getAllAugmentationsFromOwnFactions, enoughRep, getPossibleTargets} from "./utilities"
+import { keepFocus, writeOptions, getOptions, getTasks, getInstitutions, getGoals, getAllWantedAugmentationsFromOwnFactions, enoughRep } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
 	//ns.tail()
 	ns.disableLog("ALL")
-	const TODO = [installBackdoor, augment, installAugmentations, createProgram, donate, checkEndgameFaction, performTask]
+	const TODO = [installBackdoor, buyAugmentationIfReady, installAugmentations, createProgram, donate, checkEndgameFaction, performTask]
 	const options = getOptions(ns)
 	for (const todo of TODO) {
 		const isBlocking = await todo(ns, options)
@@ -12,7 +13,7 @@ export async function main(ns) {
 	}
 }
 
-export function performTask(ns, options=getOptions(ns)) {
+export function performTask(ns, options = getOptions(ns)) {
 	if (keepFocus(ns)) return false
 
 	const tasks = getTasks(ns)
@@ -64,105 +65,74 @@ export async function setGoals(ns, options, newLevel = -1) {
 
 function commitCrime(ns, crime) {
 	if (keepFocus(ns)) return false
-	const time = ns.getCrimeStats(crime).time
+	const time = ns.singularity.getCrimeStats(crime).time
 	const loopTime = 20e3
 	const n = Math.ceil(loopTime / time)
-	ns.print(crime + " " + time + " " + loopTime + " " + n)
+	ns.tprint(crime + " " + time + " " + loopTime + " " + n)
 	const parameterToDistinguish = ns.getTimeSinceLastAug()
 	ns.run("nLoop.js", 1, "simpleCrime.js", n, time, crime, parameterToDistinguish)
 	return true
 }
 
-export function createProgram(ns, options) {
-	const cracks = getCrackNames()
-	const crackLevels = [50, 100, 250, 500, 750]
-	const crackPrice = [500e3, 1.5e6, 5e6, 30e6, 250e6]
-	const otherProgs = ["AutoLink.exe", "DeepscanV1.exe", "ServerProfiler.exe", "DeepscanV2.exe"]
-	const otherLevels = [25, 75, 75, 400]
-	const otherPrice = [1e6, 500e3, 500e3, 25e6]
-	const progs = cracks//.concat(otherProgs)
-	const levels = crackLevels//.concat(otherLevels)
-	const prices = crackPrice//.concat(otherPrice)
-	for (let i = 0; i < progs.length; i++) {
-		if (!exists(ns, progs[i])) {
-			if (prices[i] < options.buyProgramThreshold * ns.getPlayer().money) {
-				checkBuyTor(ns)
-				ns.purchaseProgram(progs[i])
-			} else if (prices[i] > options.workOnProgram * ns.getPlayer().money && ns.getHackingLevel() >= levels[i] && !keepFocus(ns)) {
-				ns.print("Creating program: " + progs[i])
-				ns.createProgram(progs[i])
-				return true
-			}
-		}
-	}
-	return false
-}
-
-function checkBuyTor(ns) {
-	if (!ns.getPlayer().tor)
-		ns.purchaseTor()
-}
-
 async function installBackdoor(ns) {
-	const file = "backdoors.txt"
-	const backdoored = ns.read(file)
-	const servers = getPossibleTargets(ns)
+	const backdoored = ns.read("backdoors.txt")
+	const servers = ["powerhouse-fitness", "CSEC", "avmnite-02h", "I.I.I.I", "run4theh111z", "fulcrumassets", "w0r1d_d43m0n"]//getPossibleTargets(ns)
 	for (const server of servers) {
 		const canHack = ns.getServerRequiredHackingLevel(server) <= ns.getHackingLevel() && ns.hasRootAccess(server)
 		const isBackdoored = backdoored.includes(server)
 		if (canHack && !isBackdoored) {
-			ns.tprint("Installing backdoor: " + server)
-			connect(ns, server)
-			await ns.installBackdoor(server)
-			connect(ns, "home")
-			await ns.write(file, "\n" + server)
+			ns.exec("installBackdoor.js", "home", 1, server)
 			return false
 		}
 	}
 	return false
 }
 
-async function augment(ns, options) {
-	const allAugs = getAllAugmentationsFromOwnFactions(ns)
-	await checkSetEnoughRep(ns, options, allAugs)
-	const obtainableAugs = allAugs.filter(a => isObtainable(ns, a[0], a[1])).filter(a => checkForLowerGen(ns, a[0]))
-	if (obtainableAugs.length > 0 && (enoughAugsForReset(ns, options, obtainableAugs, allAugs))) {
-		const augValue = aug => ns.getAugmentationPrice(aug) * ns.getAugmentationRepReq(aug)
-		const sortFunction = (a, b) => augValue(a[0]) - augValue(b[0])
-		const sorted = obtainableAugs.filter(a => notNeuroFlux(a[0])).sort(sortFunction)
-		if (sorted.length > 0) {
-			var [aug, f] = sorted[sorted.length - 1]
-		} else {
-			var [aug, f] = obtainableAugs[0]
-		}
-		ns.purchaseAugmentation(f, aug)
-		ns.tprint("Purchased " + aug + " from " + f + " for " + ns.getAugmentationPrice(aug) / 1e6 + "M")
-		return true
-	}
+async function buyAugmentationIfReady(ns, options) {
+	const allAugs = getAllWantedAugmentationsFromOwnFactions(ns)
+	await checkSetMoneyFactorIfEnoughRep(ns, options, allAugs)
+	const obtainableAugs = allAugs.filter(a => isObtainable(ns, a[0], a[1]))
+	if (enoughAugsForReset(ns, options, obtainableAugs, allAugs))
+		return augment(ns, obtainableAugs)
+}
+
+function augment(ns, augs) {
+	const augValue = aug => ns.singularity.getAugmentationPrice(aug) * ns.singularity.getAugmentationRepReq(aug)
+	const sortFunction = (a, b) => augValue(a[0]) - augValue(b[0])
+	const sorted = augs.filter(a => notNeuroFlux(a[0])).sort(sortFunction)
+	if (sorted.length > 0)
+		var [aug, f] = sorted[sorted.length - 1]
+	else
+		var [aug, f] = augs[0]
+
+	ns.tprint("Purchase " + aug + " from " + f + " for " + ns.singularity.getAugmentationPrice(aug) / 1e6 + "M")
+	const success = ns.singularity.purchaseAugmentation(f, aug)
+	ns.tprint("Success: " + success)
+	return true
 }
 
 function checkForLowerGen(ns, aug) {
-	if (!aug.includes(" - Gen ")) return true
+	const oneLower = { "II": "I", "III": "II", "IV": "III", "V": "IV" }
 	const parts = aug.split(" ")
 	const gen = parts.pop()
-	if (gen == "I") return true
-	const oneLower = {"II": "I", "III": "II", "IV": "III", "V": "IV"}
+	if (!Object.keys(oneLower).includes(gen)) return true
 	const lowerGen = oneLower[gen]
 	const lowerAug = [...parts, lowerGen].join(" ")
-	return ns.getOwnedAugmentations(true).includes(lowerAug)
+	return ns.singularity.getOwnedAugmentations(true).includes(lowerAug)
 }
 
 function enoughAugsForReset(ns, options, obtainableAugs, allAugs) {
+	if (obtainableAugs.length == 0) return false
 	const nObtainable = getNDifferentAugs(obtainableAugs)
 	const enoughAugs = nObtainable >= options.resetAfterAugmentations - getNQueuedAugs(ns)
 	const allPossibleAugs = nObtainable == getNDifferentAugs(allAugs)
 	return enoughAugs || allPossibleAugs
 }
 
-async function checkSetEnoughRep(ns, options, allAugs) {
+async function checkSetMoneyFactorIfEnoughRep(ns, options, allAugs) {
 	const enoughRepAugs = allAugs.filter(a => enoughRep(ns, a[0], a[1]))
 	let money_weight = 1
-	ns.print("Number of Augs with enough Rep: " + getNDifferentAugs(enoughRepAugs))
+	ns.tprint("Number of Augs with enough Rep: " + getNDifferentAugs(enoughRepAugs))
 	if (enoughAugsForReset(ns, options, enoughRepAugs, allAugs)) {
 		money_weight = options.needMoneyFactor
 	}
@@ -176,29 +146,29 @@ function getNDifferentAugs(augmentations) {
 	return (new Set(augmentations.map(a => a[0]))).size
 }
 
-function isObtainable(ns, augmentation, faction) {
-	return enoughMoney(ns, augmentation) && enoughRep(ns, augmentation, faction)
+export function isObtainable(ns, aug, faction) {
+	return enoughMoney(ns, aug) && enoughRep(ns, aug, faction) && checkForLowerGen(ns, aug)
 }
 
 function enoughMoney(ns, augmentation) {
-	return ns.getAugmentationPrice(augmentation) < ns.getPlayer().money
+	return ns.singularity.getAugmentationPrice(augmentation) < ns.getPlayer().money
 }
 
-async function installAugmentations(ns, options, force=false) {
+async function installAugmentations(ns, options, force = false) {
 	if (getNQueuedAugs(ns) >= options.resetAfterAugmentations || force) {
 		if (keepFocus(ns)) {
 			ns.tprint("Not resetting because of focus!")
 			return
 		}
 
-		while (await augment(ns, options)) { }
+		while (await buyAugmentationIfReady(ns, options)) { }
 		await nextFactionGroup(ns)
 		ns.scriptKill("cron.js", "home")
 		ns.scriptKill("scheduler.js", "home")
 		ns.tprint("Resetting in 10s")
 		await ns.sleep(10000)
 		ns.tprint("Resetting!")
-		await ns.installAugmentations("reset.js")
+		await ns.singularity.installAugmentations("reset.js")
 		await ns.sleep(10000)
 		await ns.softReset("reset.js")
 	}
@@ -211,11 +181,11 @@ async function nextFactionGroup(ns) {
 }
 
 async function checkEndgameFaction(ns, options) {
-	ns.print("Checking endgame faction")
+	ns.tprint("Checking endgame faction")
 	for (const faction of ns.getPlayer().factions) {
 		if (isEndgameFaction(ns, faction)) {
-			const favor = ns.getFactionFavor(faction)
-			const gain = ns.getFactionFavorGain(faction)
+			const favor = ns.singularity.getFactionFavor(faction)
+			const gain = ns.singularity.getFactionFavorGain(faction)
 			const condition1 = favor < options.endGameFavorReset[0] - 30 && favor + gain >= options.endGameFavorReset[0]
 			const condition2 = favor < options.endGameFavorReset[1] && favor + gain >= options.endGameFavorReset[1]
 			if (condition1 || condition2) {
@@ -229,55 +199,41 @@ async function checkEndgameFaction(ns, options) {
 
 //["ECorp", "NWO", "Fulcrum Secret Technologies", "BitRunners", "Daedalus", "The Covenant", "Illuminati", "Speakers for the Dead"]
 export function isEndgameFaction(ns, faction) {
-	return ns.getAugmentationsFromFaction(faction).filter(notNeuroFlux).map(ns.getAugmentationRepReq).sort()[0] > 500e3
+	return ns.singularity.getAugmentationsFromFaction(faction).filter(notNeuroFlux).map(ns.singularity.getAugmentationRepReq).sort()[0] > 500e3
 }
 
 function getNQueuedAugs(ns) {
-	return ns.getOwnedAugmentations(true).length - ns.getOwnedAugmentations(false).length
+	return ns.singularity.getOwnedAugmentations(true).length - ns.singularity.getOwnedAugmentations(false).length
 }
 
 function getFilteredAugmentations(ns) {
-	const enoughRep = a => ns.getAugmentationRepReq(a[0]) < ns.getFactionRep(a[1])
-	const enoughRepAugs = getAllAugmentationsFromOwnFactions(ns).filter(enoughRep).map(a => a[0])
+	const enoughRep = a => ns.singularity.getAugmentationRepReq(a[0]) < ns.singularity.getFactionRep(a[1])
+	const enoughRepAugs = getAllWantedAugmentationsFromOwnFactions(ns).filter(enoughRep).map(a => a[0])
 	const inEnoughRepAugs = a => enoughRepAugs.includes(a[0])
-	const augmentations = getAllAugmentationsFromOwnFactions(ns)
+	const augmentations = getAllWantedAugmentationsFromOwnFactions(ns)
 		.filter(a => !inEnoughRepAugs(a))
 		.filter(a => notNeuroFlux(a[0]))
 	return augmentations
 }
 
 function donate(ns, options) {
-	ns.tprint("Donate:")
 	for (const aug of getFilteredAugmentations(ns)) {
-		ns.tprint(aug)
 		const [augmentation, faction] = aug
-		if (ns.getFactionFavor(faction) < ns.getFavorToDonate()) return false
+		if (ns.singularity.getFactionFavor(faction) < ns.getFavorToDonate()) return false
 
-		const reqMoney = -getRequiredDonationMoney(ns, ns.getFactionRep(faction) - ns.getAugmentationRepReq(augmentation))
-		ns.tprint("need: " + reqMoney / 1e6 + "M for " + augmentation + " rep: " + ns.getAugmentationRepReq(augmentation) /1e3 + "k")
+		const reqMoney = -getRequiredDonationMoney(ns, ns.singularity.getFactionRep(faction) - ns.singularity.getAugmentationRepReq(augmentation))
+		//ns.tprint("need: " + reqMoney / 1e6 + "M for " + augmentation + " rep: " + ns.singularity.getAugmentationRepReq(augmentation) /1e3 + "k")
 		//ns.tprint("Donating to " + faction + " if " + hasEnoughFavor + " and " + hasEnoughMoney + " to get " + augmentation)
 		//ns.tprint((reqMoney / 1e9).toFixed(1) + "B")
 		if (reqMoney < ns.getPlayer().money) {
-			ns.tprint("Donating to " + faction + " now!")
-			ns.tprint("rep: " + ns.getFactionRep(faction)/1e3 + "k")
+			//ns.tprint("Donating to " + faction + " now!")
+			//ns.tprint("rep: " + ns.singularity.getFactionRep(faction)/1e3 + "k")
 			ns.donateToFaction(faction, reqMoney)
-			ns.tprint("rep: " + ns.getFactionRep(faction))
+			ns.tprint("Donate: " + (reqMoney / 1e6).toFixed(0) + "M to " + faction + " for " + augmentation)
+			//ns.tprint("rep: " + ns.singularity.getFactionRep(faction))
 			return false
 		}
 	}
-}
-
-
-export function isHackingAug(ns, augName) {
-	const augStats = ns.getAugmentationStats(augName)
-	let n = 0
-	for (const stat in augStats) {
-		n++
-		if (stat.startsWith("hacking") || stat.startsWith("faction")) {
-			return true
-		}
-	}
-	return n == 0 // if no stats, buy it
 }
 
 function getRequiredDonationMoney(ns, reputation) {

@@ -87,9 +87,9 @@ export function exists(ns, file) {
 	return ns.fileExists("/" + file)
 }
 
-export function getConnectionPath(ns, target, start="home", backConnect="") {
+export function getConnectionPath(ns, target, start = "home", backConnect = "") {
 	for (const s of ns.scan(start)) {
-		if (s === target) return [s]		
+		if (s === target) return [s]
 		if (s !== backConnect) {
 			const pth = getConnectionPath(ns, target, s, start)
 			if (pth) return [s, ...pth]
@@ -99,7 +99,7 @@ export function getConnectionPath(ns, target, start="home", backConnect="") {
 
 export function connect(ns, target) {
 	for (const server of getConnectionPath(ns, target)) {
-		ns.connect(server)
+		ns.singularity.connect(server)
 	}
 }
 
@@ -124,7 +124,7 @@ export function getOptions(ns) {
 
 export function getFile(ns, file) {
 	return JSON.parse(ns.read(file))
-} 
+}
 
 export function getTasks(ns) {
 	const obj = getFile(ns, "tasks.txt")
@@ -165,24 +165,40 @@ export async function updateOptions(ns, option, value) {
 }
 
 export function enoughRep(ns, augmentation, faction) {
-	return ns.getAugmentationRepReq(augmentation) < ns.getFactionRep(faction)
+	return ns.singularity.getAugmentationRepReq(augmentation) < ns.singularity.getFactionRep(faction)
 }
 
-export function getAllAugmentationsFromOwnFactions(ns) {
-	const ownedAugmentations = ns.getOwnedAugmentations(true)
-	ns.tprint("owned augs:")
-	ns.tprint(ownedAugmentations)
+export function getWantedAugmentationsFromFaction(ns, faction) {
+	let augs = ns.singularity.getAugmentationsFromFaction(faction)
+	ns.print(getOptions(ns).onlyHackingAugs)
+	if (getOptions(ns).onlyHackingAugs)
+		augs = augs.filter(a => isHackingAug(ns, a))
+	return augs
+}
+
+export function getAllWantedAugmentationsFromOwnFactions(ns) {
+	const ownedAugmentations = ns.singularity.getOwnedAugmentations(true)
 	let augmentations = []
 	for (const f of ns.getPlayer().factions) {
-		for (const aug of ns.getAugmentationsFromFaction(f)) {
+		for (const aug of getWantedAugmentationsFromFaction(ns, f)) {
 			if (aug == "NeuroFlux Governor" || !ownedAugmentations.includes(aug)) {
 				augmentations.push([aug, f])
 			}
 		}
 	}
-	ns.tprint("faction augs: ")
-	ns.tprint(augmentations)
 	return augmentations
+}
+
+export function isHackingAug(ns, augName) {
+	const augStats = ns.singularity.getAugmentationstats(augName)
+	let n = 0
+	for (const stat in augStats) {
+		n++
+		if (stat.startsWith("hacking") || stat.startsWith("faction") || stat.startsWith("company")) {
+			return true
+		}
+	}
+	return n == 0 // if no stats, buy it
 }
 
 export function keepFocus(ns) {
