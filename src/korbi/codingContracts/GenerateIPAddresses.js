@@ -30,5 +30,9 @@ function generateIP(numbers, nBlocks) {
 
 function numCheck(num) {
 	const len = num.length
-	return (len > 0) && (len <= 3) && (Number(num) > (10 ** (len - 1))) && (Number(num) <= 256)
+	return num == ["0"] || (len > 0) && (len <= 3) && !leadingZero(num) && (Number(num) <= 256)
+}
+
+function leadingZero(num) {
+	return Number(num) < (10 ** (num.length - 1))
 }

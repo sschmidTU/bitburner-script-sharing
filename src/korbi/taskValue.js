@@ -10,7 +10,7 @@ export async function main(ns) {
 
 async function buildTable(ns) {
 	const options = getOptions(ns)
-	await ns.scp("required_stats.script", "home", options.host)
+	await ns.scp("required_stats.script", options.host, "home")
 	const statsGoal = getGoals(ns)
 	const institutions = getInstitutions(ns)
 
@@ -38,22 +38,22 @@ function allTasks(ns, institutions) {
 		"kidnap and ransom", "assassinate", "heist"]
 	const workoutStats = ["strength", "defense", "dexterity", "agility", "charisma"]
 	let tasks = []
-	for (const stat of workoutStats) {
-		tasks.push({ "type": "train", "subType": stat })
-	}
-	for (const crime of crimes) {
-		tasks.push({ "type": "crime", "subType": crime })
-	}
+	// for (const stat of workoutStats) {
+	// 	tasks.push({ "type": "train", "subType": stat })
+	// }
+	// for (const crime of crimes) {
+	// 	tasks.push({ "type": "crime", "subType": crime })
+	// }
 	for (const faction of [ns.getPlayer().factions[0]]) {
 		for (const work of factionWork) {
 			tasks.push({ "type": "faction", "at": faction, "subType": work })
 		}
 	}
-	for (const company in institutions.corporations) {
-		for (const job of jobs) {
-			tasks.push({ "type": "work", "at": company, "subType": job })
-		}
-	}
+	// for (const company in institutions.corporations) {
+	// 	for (const job of jobs) {
+	// 		tasks.push({ "type": "work", "at": company, "subType": job })
+	// 	}
+	// }
 	return tasks
 }
 
@@ -65,6 +65,7 @@ function isOwnFaction(ns, corp) {
 	return false
 }
 
+/** @param {import(".").NS} ns **/
 async function taskValue(ns, options, institutions, statsGoal, task) {
 	if (task.type == "train" && ns.getPlayer().money < 5e6) return 0
 	const workoutFile = "workout_gain_" + task.subType + ".txt"

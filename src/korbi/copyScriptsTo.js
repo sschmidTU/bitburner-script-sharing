@@ -1,9 +1,10 @@
 /** @param {NS} ns **/
 export async function main(ns) {
-	await copyTo(ns, ns.args[0])
+	copyTo(ns, ns.args[0])
 }
 
-export async function copyTo(ns, server) {
+/** @param {import(".").NS } ns */
+export function copyTo(ns, server) {
 	const files = ns.ls("home").filter(f => f.includes(".js") || f.includes(".script") || f.includes(".txt"))
-    await ns.scp(files, "home", server)
+    ns.scp(files, server, "home")
 }

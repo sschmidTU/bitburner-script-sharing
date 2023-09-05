@@ -1,11 +1,20 @@
 /** @param {import(".").NS} ns **/
 export async function main(ns) {
     ns.tail()
+    // ns.bladeburner.inBladeburner()    
     while (true) { 
         const time = task(ns)
         await ns.sleep(time + 200)
     }
 }
+
+function joinBladeburner() {
+    ns.bladeburner.joinBladeburnerDivision()
+    // need 25 rank for faction
+    // buy item to do things in parallel
+}
+
+
 /** @param {import(".").NS} ns **/
 function task(ns) {
     levelUpSkills(ns)
@@ -58,7 +67,7 @@ export function getHighestValueContract(ns) {
 
 
 function valueOfAction(ns, type, action) {
-    return Math.pow(getSuccesChance(ns, type, action), 3) * ns.bladeburner.getActionRepGain(type, action) / ns.bladeburner.getActionTime(type, action)
+    return Math.pow(getSuccesChance(ns, type, action), 2) * ns.bladeburner.getActionRepGain(type, action) / ns.bladeburner.getActionTime(type, action)
 }
 
 function getSuccesChance(ns, type, action) {

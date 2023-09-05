@@ -39,7 +39,7 @@ async function getMostEffectiveItem(ns) {
 	const upgradeCost = [h.getLevelUpgradeCost, h.getRamUpgradeCost, h.getCoreUpgradeCost]
 	
 	let bestNode = -1
-	let shortestTime = h.getPurchaseNodeCost() / lowestNodeGain(ns, dict)
+	let shortestTime = h.getPurchaseNodeCost() / lowestNodeGain(ns, dict) * 10 // see if the balance is good
 	let bestItem = h.purchaseNode
 	let bestCost = h.getPurchaseNodeCost()
 	for (let node = 0; node < h.numNodes(); node++) {

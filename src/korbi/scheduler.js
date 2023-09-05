@@ -79,7 +79,7 @@ function getXpTarget(ns, options) {
 
 async function prepareServers(ns, options, servers) {
 	for (const server of servers) {
-		await ns.scp(options.scripts, "home", server)
+		await ns.scp(options.scripts, server, "home")
 	}
 }
 

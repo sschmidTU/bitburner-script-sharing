@@ -35,12 +35,13 @@ export async function main(ns) {
 		scripts["createProgram"] = 20
 		scripts.crime = 3
 	}
-	if (availableRam == 32) {
+	if (availableRam <= 32) {
 		opts.maxWeakenTargets = 0
 		opts.levelUpHack = false
 		opts.hackPercent = 0.1
 		opts.workOnProgram = 0.01
 		opts.buyProgramThreshold = 0.1
+		scripts.estimateHackXp = false
 	}
 	else if (availableRam == 64) {
 		opts.maxWeakenTargets = 1
@@ -61,12 +62,13 @@ export async function main(ns) {
 		scripts.performTask = 20
 		scripts.crime = false
 	}
-	const isNew = await setOptions(ns, opts, scripts, availableRam)
-	if (isNew) {
-		ns.tprint("Killing and restarting cron")
-		ns.scriptKill("cron.js", "home")
-		ns.spawn("cron.js")
-	}
+	setOptions(ns, opts, scripts, availableRam).then(isNew => {
+		if (isNew) {
+			ns.tprint("Killing and restarting cron")
+			ns.scriptKill("cron.js", "home")
+			ns.spawn("cron.js")
+		}
+	});
 }
 
 async function setOptions(ns, opts, scripts, availableRam) {
@@ -80,14 +82,14 @@ async function setOptions(ns, opts, scripts, availableRam) {
 	let cron = getFile(ns, "cron.txt")
 	let maxRamRequired = 12
 	for (const script in scripts) {
-		const ramReq = ns.getScriptRam(script+".js")
+		const ramReq = ns.getScriptRam(script + ".js")
 		if (ramReq < availableRam && scripts[script]) {
-			cron[script+".js"] = scripts[script]
+			cron[script + ".js"] = scripts[script]
 			if (ramReq > maxRamRequired) {
 				maxRamRequired = ramReq
 			}
 		} else {
-			delete cron[script+".js"]
+			delete cron[script + ".js"]
 		}
 	}
 	await writeFile(ns, "cron.txt", cron)
@@ -96,7 +98,7 @@ async function setOptions(ns, opts, scripts, availableRam) {
 		options[opt] = opts[opt]
 	}
 	await writeOptions(ns, options)
-	await ns.scp("options.script", "home", options.host)
-	
+	await ns.scp("options.script", options.host, "home")
+
 	return true
 }

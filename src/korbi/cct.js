@@ -3,7 +3,7 @@ import { exists } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
 	const [filename, server] = ns.args
-	const contractType = ns.codingcontract.getContractType(filename, server).replace(/\s+/g, '')
+	const contractType = ns.codingcontract.getContractType(filename, server).replace(/(\s+|:+)/g, '')
 	ns.print("Type: " + contractType)
 	const contractSolver = `codingContracts/${contractType}.js`
 	ns.print(contractSolver)
@@ -11,11 +11,11 @@ export async function main(ns) {
 		ns.print("Running Solver: " + contractSolver)
 		ns.run(contractSolver, 1, filename, server)
 	} else {
-		ns.tail()
-		ns.print("Need solver: " + contractSolver + " for " + filename + " " + server)
+		// ns.tail()
+		// ns.print("Need solver: " + contractSolver + " for " + filename + " " + server)
 
-		const description = ns.codingcontract.getDescription(filename, server)
-		ns.print(description)
+		// const description = ns.codingcontract.getDescription(filename, server)
+		// ns.print(description)
 	}
 }
 
@@ -31,7 +31,7 @@ export function solve(ns, func, test=false) {
 		if (!result) {
 			ns.tail()
 			ns.print(filename + " is wrong!!")
-			ns.write(filename + ".txt", func.name + "\n" + data)
+			ns.write(filename + ".txt", server + "\n" + func.name + "\n" + data, "w")
 		}
 	}
 }

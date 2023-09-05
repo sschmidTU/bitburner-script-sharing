@@ -105,7 +105,7 @@ export function connect(ns, target) {
 
 export async function execute(ns, script, host, ...args) {
 	if (host != "home") {
-		await ns.scp(script, "home", host)
+		await ns.scp(script, host, "home")
 		ns.exec(script, host, 1, ...args)
 	}
 }

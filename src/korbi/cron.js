@@ -22,7 +22,7 @@ async function cron(ns) {
 					host = "home"
 				}
 				if (host != "home") {
-					await ns.scp(script, "home", options.host)
+					await ns.scp(script, options.host, "home")
 				}
 				if (ns.exec(script, host, 1, ...ns.args) != 0) {
 					table[script] = time + getFile(ns, "cron.txt")[script]

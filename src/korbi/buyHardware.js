@@ -3,7 +3,6 @@ import { getOptions, totalRam, usableMoney } from "./utilities"
 /** @param {NS} ns **/
 export async function main(ns) {
     ns.disableLog("getServerMaxRam")
-    ns.tail()
 
     const ram = getMaxPayableServer(ns)
     if (ram >= minimumRamToBuy(ns))

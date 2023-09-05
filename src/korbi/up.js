@@ -4,6 +4,7 @@ export async function main(ns) {
 	//ns.run("singularity.ns")
 	ns.run("scheduler.js", 1, ...ns.args)
 	ns.run("cron.js", 1, ...ns.args)
+	// ns.run("bladeburner.js")
 	//ns.run("scan.ns")
 	//ns.run("buyHardware.ns")
 	//ns.run("hacknet.ns")

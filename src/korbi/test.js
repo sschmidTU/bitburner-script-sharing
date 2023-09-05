@@ -1,30 +1,43 @@
-import { exists, getCrackNames, getNumCracks, isHackable, isRootable, enoughRep, getAllAugmentationsFromOwnFactions } from "./utilities"
-/** @param {NS} ns **/
+import { getTotalThreads } from "./scheduler"
+import { isEndgameFaction, isObtainable } from "./singularity"
+import { exists, getCrackNames, getNumCracks, isHackable, isRootable, enoughRep, getAllWantedAugmentationsFromOwnFactions, getAllServers, getOptions, totalRam } from "./utilities"
+/** @param {import(".").NS} ns **/
 export async function main(ns) {
     ns.tail()
-	ns.disableLog("ALL")
+	ns.formulas.work.companyGains(ns.getPlayer(), "AeroCorp", "Software Engineering Intern", 1)
+	// ns.disableLog("ALL")
+	// ns.print(getAllServers(ns)
+	// .filter(s => s !== "home")
+	// .filter(ns.hasRootAccess)
+	// .filter(s => !ns.getPurchasedServers().includes(s))
+	// .filter(s => isHackable(ns, s)))
+	// ns.print("Total Ram: " + totalRam(ns) + "GB")
+	//ns.print(getAllAugmentationsFromOwnFactions(ns).filter(a => isObtainable(ns, a[0], a[1])))
+	//ns.print(ns.read("cron.txt"))
 	//ns.print(ns.ls("home"))
 	//ns.print(ns.getPurchasedServerCost(256))
 	//ns.print(ns.fileExists("codingContracts/SpiralizeMatrix.js"))
-	//ns.print(ns.getCrimeStats("homicide").money / 1e3)
+	//ns.print(ns.singularity.getCrimeStats("homicide").money / 1e3)
 	//ns.print(ns["hack"]("n00dles"))
-    ns.print(ns.read("tasks.txt"))
+    //ns.print(ns.read("tasks.txt"))
+	//ns.print(isEndgameFaction(ns, "Blade Industries"))
 	//ns.print(ns.read("options.script"))
 	//await printHost(ns, "required_stats.script")
     //ns.print(ns.args[0])
     //ns.print(ns.args[1])
-	//ns.travelToCity("Sector-12")
+	//ns.singularity.travelToCity("Sector-12")
 	//ns.gymWorkout("powerhouse gym", "agility")
+	//const general = ns.bladeburner.getGeneralActionNames()
 	//console.dir(ns.getPlayer())
 	//await ns.sleep(10000)
 	//console.dir(ns.getPlayer())
-	//ns.applyToCompany("KuaiGong International", "software")
-	//ns.workForCompany("KuaiGong International", "software")
+	//ns.singularity.applyToCompany("KuaiGong International", "software")
+	//ns.singularity.workForCompany("KuaiGong International", "software")
 	//ns.tprint(getServerList(ns))
-	//ns.tprint(ns.getFactionFavorGain("Fulcrum Secret Technologies"))
+	//ns.tprint(ns.singularity.getFactionFavorGain("Fulcrum Secret Technologies"))
 	//ns.print(ns.getWeakenTime("n00dles"))
 	//ns.tprint(ns.getHackTime(ns .args[0]))
-	//ns.tprint(ns.getOwnedAugmentations(true).length)
+	//ns.tprint(ns.singularity.getOwnedAugmentations(true).length)
 	//ns.print(ns.read("servers_money_factor.txt"))
 	//ns.print(ns.read("servers_hack_xp.txt"))
 	//ns.print(ns.read("servers_hack_factor.txt"))
@@ -34,10 +47,11 @@ export async function main(ns) {
 	//ns.print(ns.getWeakenTime("iron-gym"))
 	//ns.print(getServerList(ns).filter(s => isRootable(ns, s)))
 	//ns.print(getAllAugmentationsFromOwnFactions(ns).filter(a => enoughRep(ns, a[0], a[1])))
+	//ns.bladerburner.joinBladeburnerFaction()
 }
 
 async function printHost(ns, script) {
 	const options = JSON.parse(ns.read("options.script"))
-	await ns.scp(script, options.host, "home")
+	await ns.scp(script, "home", options.host)
 	ns.print(ns.read(script))
 }
